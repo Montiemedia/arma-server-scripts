@@ -1,0 +1,30 @@
+[Unit]
+Description=TF133 Arma 3 Control Panel
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=arma3panel
+Group=arma3panel
+SupplementaryGroups=arma3 systemd-journal
+WorkingDirectory=/opt/arma3-control
+Environment=CONTROL_ROOT=/opt/arma3-control
+Environment=ARMA_ENV_FILE=/etc/arma3/arma3.env
+Environment=ARMA_PANEL_JOB_DIR=/var/lib/arma3-panel/jobs
+ExecStart=/opt/arma3-control/.venv/bin/uvicorn backend.app:app --host 127.0.0.1 --port 8088 --workers 1 --proxy-headers --forwarded-allow-ips=127.0.0.1
+Restart=on-failure
+RestartSec=5
+UMask=0027
+
+PrivateTmp=true
+ProtectHome=false
+ProtectSystem=full
+ReadWritePaths=/var/lib/arma3-panel
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictSUIDSGID=false
+
+[Install]
+WantedBy=multi-user.target

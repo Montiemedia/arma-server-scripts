@@ -1,0 +1,13 @@
+// Bewusst konservative Werte. Erst nach Messungen anpassen.
+MaxMsgSend = 768;
+MaxSizeGuaranteed = 512;
+MaxSizeNonguaranteed = 256;
+MinBandwidth = 131072;
+MaxBandwidth = 1000000000;
+MinErrorToSend = 0.001;
+MinErrorToSendNear = 0.01;
+MaxCustomFileSize = 0;
+class sockets
+{
+    maxPacketSize = 1400;
+};

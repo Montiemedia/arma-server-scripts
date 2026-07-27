@@ -1,0 +1,12 @@
+Defaults:arma3panel !requiretty
+Cmnd_Alias ARMA3_PANEL_ACTIONS = \
+    /opt/arma3-control/scripts/arma3ctl start, \
+    /opt/arma3-control/scripts/arma3ctl stop, \
+    /opt/arma3-control/scripts/arma3ctl restart, \
+    /opt/arma3-control/scripts/arma3ctl update-server, \
+    /opt/arma3-control/scripts/arma3ctl update-mods, \
+    /opt/arma3-control/scripts/arma3ctl update-all, \
+    /opt/arma3-control/scripts/arma3ctl backup, \
+    /opt/arma3-control/scripts/arma3ctl sync-keys, \
+    /opt/arma3-control/scripts/arma3ctl doctor
+arma3panel ALL=(root) NOPASSWD: ARMA3_PANEL_ACTIONS

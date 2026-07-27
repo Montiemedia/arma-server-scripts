@@ -1,0 +1,33 @@
+hostname = "TF133 ALiVE";
+password = "";
+passwordAdmin = "CHANGE_ME_IMMEDIATELY";
+
+maxPlayers = 20;
+kickDuplicate = 1;
+verifySignatures = 2;
+allowedFilePatching = 0;
+
+motd[] = {
+    "Willkommen auf dem TF133 ALiVE Server.",
+    "Teamplay, klare Kommunikation und kein Kindergarten."
+};
+motdInterval = 5;
+
+persistent = 1;
+BattlEye = 1;
+
+voteMissionPlayers = 99;
+voteThreshold = 0.99;
+
+// Trage berechtigte Steam-UIDs ein. Diese können #login ohne Kennwort verwenden.
+admins[] = {};
+
+// Mission später gezielt ergänzen. Beispiel:
+// class Missions
+// {
+//     class TF133
+//     {
+//         template = "missionname.mapname";
+//         difficulty = "Custom";
+//     };
+// };
