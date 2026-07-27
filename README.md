@@ -2,6 +2,9 @@
 
 Schlankes Web-Panel und Serverscript für einen modifizierten Arma-3-Dedicated-Server unter Ubuntu 24.04 (x86-64). Das Projekt ist auf einen einzelnen Linux-Host mit systemd, maximal 20 Spieler und den vorhandenen TF133-ALiVE-Modsatz ausgelegt. Windows wird weder als Serverplattform unterstützt noch in der Installation berücksichtigt.
 
+Noch nie einen Linux-Server eingerichtet? Dann beginne mit der
+[Installationsanleitung für Einsteiger](INSTALLATION-EINFACH.md).
+
 ## Enthalten
 
 - FastAPI-Webpanel ohne Node.js-Buildkette
