@@ -18,7 +18,7 @@ export DEBIAN_FRONTEND=noninteractive
 apt-get update
 apt-get install -y --no-install-recommends \
     ca-certificates curl tar rsync sudo openssl apache2-utils nginx ufw \
-    python3 python3-venv python3-pip lib32gcc-s1 lib32stdc++6
+    python3 python3-venv python3-pip util-linux lib32gcc-s1 lib32stdc++6
 
 getent group "$OPS_GROUP" >/dev/null || groupadd --system "$OPS_GROUP"
 if ! id "$ARMA_USER" >/dev/null 2>&1; then
