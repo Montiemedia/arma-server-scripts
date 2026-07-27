@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title>TF133 Arma 3 Control</title>
+  <link rel="stylesheet" href="/assets/styles.css">
+  <script src="/assets/app.js" defer></script>
+</head>
+<body>
+  <div class="shell">
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">TF133 · Linux Dedicated Server</p>
+        <h1>Arma 3 Control</h1>
+      </div>
+      <div class="topbar-status">
+        <span id="serviceBadge" class="badge badge-neutral">Wird geprüft</span>
+        <span id="lastUpdate" class="muted">Noch keine Daten</span>
+      </div>
+    </header>
+
+    <nav class="tabs" aria-label="Bereiche">
+      <button class="tab is-active" data-tab="overview">Übersicht</button>
+      <button class="tab" data-tab="mods">Mods</button>
+      <button class="tab" data-tab="logs">Serverlog</button>
+      <button class="tab" data-tab="jobs">Aufträge</button>
+    </nav>
+
+    <main>
+      <section id="overview" class="panel-view is-active">
+        <div class="metric-grid">
+          <article class="metric">
+            <span class="metric-label">Dienst</span>
+            <strong id="serviceState">Unbekannt</strong>
+            <span id="serviceDetail" class="metric-detail">systemd</span>
+          </article>
+          <article class="metric">
+            <span class="metric-label">Arma-Prozess</span>
+            <strong id="processPid">–</strong>
+            <span id="processMemory" class="metric-detail">Kein Prozess</span>
+          </article>
+          <article class="metric">
+            <span class="metric-label">Host-CPU</span>
+            <strong id="hostCpu">–</strong>
+            <span id="hostLoad" class="metric-detail">Load Average</span>
+          </article>
+          <article class="metric">
+            <span class="metric-label">Arbeitsspeicher</span>
+            <strong id="hostMemory">–</strong>
+            <span id="hostMemoryDetail" class="metric-detail">32 GB vorgesehen</span>
+          </article>
+          <article class="metric">
+            <span class="metric-label">NVMe-Speicher</span>
+            <strong id="diskUsage">–</strong>
+            <span id="diskDetail" class="metric-detail">Serververzeichnis</span>
+          </article>
+          <article class="metric">
+            <span class="metric-label">Modsatz</span>
+            <strong id="modCount">–</strong>
+            <span class="metric-detail">aktivierte Verzeichnisse</span>
+          </article>
+        </div>
+
+        <section class="card controls-card">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">Serversteuerung</p>
+              <h2>Aktionen</h2>
+            </div>
+            <span id="activeJob" class="muted">Kein Auftrag aktiv</span>
+          </div>
+
+          <div class="control-groups">
+            <div class="control-group">
+              <h3>Betrieb</h3>
+              <div class="button-row">
+                <button class="button button-primary" data-action="start">Starten</button>
+                <button class="button" data-action="restart">Neustarten</button>
+                <button class="button button-danger" data-action="stop">Stoppen</button>
+              </div>
+            </div>
+            <div class="control-group">
+              <h3>Wartung</h3>
+              <div class="button-row">
+                <button class="button" data-action="update-server">Server aktualisieren</button>
+                <button class="button" data-action="update-mods">Mods aktualisieren</button>
+                <button class="button" data-action="update-all">Alles aktualisieren</button>
+              </div>
+            </div>
+            <div class="control-group">
+              <h3>Sicherung und Prüfung</h3>
+              <div class="button-row">
+                <button class="button" data-action="backup">Backup erstellen</button>
+                <button class="button" data-action="sync-keys">Keys synchronisieren</button>
+                <button class="button" data-action="doctor">Diagnose</button>
+              </div>
+            </div>
+          </div>
+          <p id="actionMessage" class="notice" hidden></p>
+        </section>
+
+        <section class="card">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">Aktueller Auftrag</p>
+              <h2 id="currentJobTitle">Keine Wartung aktiv</h2>
+            </div>
+            <span id="currentJobStatus" class="badge badge-neutral">Bereit</span>
+          </div>
+          <pre id="currentJobLog" class="console" aria-live="polite">Hier erscheint die Ausgabe der nächsten Aktion.</pre>
+        </section>
+      </section>
+
+      <section id="mods" class="panel-view">
+        <section class="card">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">TF133 ALiVE Preset</p>
+              <h2>Modbestand</h2>
+            </div>
+            <button id="refreshMods" class="button button-small">Neu laden</button>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Mod</th>
+                  <th>Quelle</th>
+                  <th>Workshop-ID</th>
+                  <th>Ordner</th>
+                  <th>Status</th>
+                  <th>Größe</th>
+                </tr>
+              </thead>
+              <tbody id="modsBody">
+                <tr><td colspan="6" class="empty">Modliste wird geladen.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </section>
+
+      <section id="logs" class="panel-view">
+        <section class="card">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">journalctl</p>
+              <h2>Serverlog</h2>
+            </div>
+            <div class="button-row">
+              <select id="logLines" class="select" aria-label="Anzahl Logzeilen">
+                <option value="100">100 Zeilen</option>
+                <option value="200" selected>200 Zeilen</option>
+                <option value="500">500 Zeilen</option>
+                <option value="1000">1.000 Zeilen</option>
+              </select>
+              <button id="refreshLogs" class="button button-small">Neu laden</button>
+            </div>
+          </div>
+          <pre id="serverLog" class="console console-large">Serverlog wird geladen.</pre>
+        </section>
+      </section>
+
+      <section id="jobs" class="panel-view">
+        <section class="card">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">Änderungsnachweis</p>
+              <h2>Auftragsverlauf</h2>
+            </div>
+            <button id="refreshJobs" class="button button-small">Neu laden</button>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Zeit</th>
+                  <th>Auftrag</th>
+                  <th>Status</th>
+                  <th>Exitcode</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="jobsBody">
+                <tr><td colspan="5" class="empty">Noch keine Aufträge.</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <pre id="selectedJobLog" class="console" hidden></pre>
+        </section>
+      </section>
+    </main>
+
+    <footer>
+      <span>TF133 Arma 3 Control</span>
+      <span>Backend nur lokal · Zugriff über Nginx Basic Auth</span>
+    </footer>
+  </div>
+</body>
+</html>

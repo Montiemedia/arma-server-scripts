@@ -1,0 +1,29 @@
+[Unit]
+Description=TF133 Arma 3 Dedicated Server
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=arma3
+Group=arma3
+WorkingDirectory=/home/arma3/server
+EnvironmentFile=/etc/arma3/arma3.env
+ExecStart=/opt/arma3-control/scripts/start-server.sh
+KillSignal=SIGINT
+KillMode=mixed
+TimeoutStopSec=120
+Restart=on-failure
+RestartSec=10
+LimitNOFILE=65536
+UMask=0027
+
+# Conservative hardening that does not block the game from writing profiles/logs.
+PrivateTmp=true
+ProtectHome=false
+ProtectSystem=full
+ReadWritePaths=/home/arma3
+NoNewPrivileges=true
+
+[Install]
+WantedBy=multi-user.target
