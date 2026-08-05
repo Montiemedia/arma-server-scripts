@@ -18,6 +18,16 @@ source "$ENV_FILE"
 : "${MODS_FILE:=/etc/arma3/mods.csv}"
 : "${SERVER_UNIT:=arma3-server.service}"
 : "${BACKUP_RETENTION_DAYS:=14}"
+: "${FAILED_MODS_FILE:=$STATE_DIR/failed-mods.csv}"
+: "${LOCK_FILE:=/run/lock/arma3-control.lock}"
+
+declare -a MOD_FAILURE_NAMES=()
+declare -a MOD_FAILURE_IDS=()
+declare -a MOD_FAILURE_TARGETS=()
+declare -a MOD_FAILURE_STAGES=()
+declare -a MOD_FAILURE_REASONS=()
+DOWNLOAD_ERROR=""
+MOD_UPDATE_RESULT=0
 
 log() { printf '[%s] %s\n' "$(date '+%F %T')" "$*"; }
 die() { printf 'FEHLER: %s\n' "$*" >&2; exit 1; }
@@ -32,6 +42,12 @@ as_arma3() {
 
 require_root() {
     [[ $EUID -eq 0 ]] || die "Dieser Befehl muss als root oder über sudo laufen."
+}
+
+acquire_maintenance_lock() {
+    require_root
+    exec 9>"$LOCK_FILE"
+    flock -n 9 || die "Eine andere Arma-3-Wartungsaktion läuft bereits."
 }
 
 ensure_dirs() {
@@ -128,6 +144,7 @@ sync_keys() {
     chown "$ARMA_USER:$ARMA_USER" "$state_file"
 
     while IFS=, read -r name type workshop_id target enabled; do
+        enabled=${enabled%$'\r'}
         [[ "$name" == "name" ]] && continue
         [[ "$enabled" == "1" ]] || continue
         local mod_dir="$SERVER_DIR/mods/$target"
@@ -146,6 +163,66 @@ sync_keys() {
     log "Mod-Keys synchronisiert: $(wc -l < "$state_file")"
 }
 
+csv_quote() {
+    local value="$1"
+    value=${value//$'\r'/ }
+    value=${value//$'\n'/ }
+    value=${value//\"/\"\"}
+    printf '"%s"' "$value"
+}
+
+reset_mod_failures() {
+    MOD_FAILURE_NAMES=()
+    MOD_FAILURE_IDS=()
+    MOD_FAILURE_TARGETS=()
+    MOD_FAILURE_STAGES=()
+    MOD_FAILURE_REASONS=()
+
+    printf '%s\n' 'timestamp,name,workshop_id,target,stage,reason' > "$FAILED_MODS_FILE"
+    chown "$ARMA_USER:$ARMA_USER" "$FAILED_MODS_FILE"
+    chmod 0640 "$FAILED_MODS_FILE"
+}
+
+record_mod_failure() {
+    local name="$1" workshop_id="$2" target="$3" stage="$4" reason="$5"
+
+    printf '%s,%s,%s,%s,%s,%s\n' \
+        "$(csv_quote "$(date '+%F %T')")" \
+        "$(csv_quote "$name")" \
+        "$(csv_quote "$workshop_id")" \
+        "$(csv_quote "$target")" \
+        "$(csv_quote "$stage")" \
+        "$(csv_quote "$reason")" >> "$FAILED_MODS_FILE"
+
+    MOD_FAILURE_NAMES+=("$name")
+    MOD_FAILURE_IDS+=("$workshop_id")
+    MOD_FAILURE_TARGETS+=("$target")
+    MOD_FAILURE_STAGES+=("$stage")
+    MOD_FAILURE_REASONS+=("$reason")
+}
+
+print_mod_failure_summary() {
+    local count=${#MOD_FAILURE_NAMES[@]}
+    local index
+
+    if (( count == 0 )); then
+        log "Alle Workshop-Mods wurden erfolgreich verarbeitet."
+        log "Fehlerdatei (nur Kopfzeile): $FAILED_MODS_FILE"
+        return 0
+    fi
+
+    printf '\n=== Fehlerhafte Mods (%d) ===\n' "$count"
+    for ((index=0; index<count; index++)); do
+        printf '  - %s (%s) - %s: %s\n' \
+            "${MOD_FAILURE_NAMES[$index]}" \
+            "${MOD_FAILURE_IDS[$index]}" \
+            "${MOD_FAILURE_STAGES[$index]}" \
+            "${MOD_FAILURE_REASONS[$index]}"
+    done
+    printf '\nFehlerdatei: %s\n' "$FAILED_MODS_FILE"
+    printf 'Alle übrigen Mods wurden weiterverarbeitet.\n'
+}
+
 download_workshop_item() {
     local name="$1" workshop_id="$2"
     shift 2
@@ -153,7 +230,19 @@ download_workshop_item() {
     local retries="${WORKSHOP_RETRIES:-4}"
     local retry_delay="${WORKSHOP_RETRY_DELAY:-30}"
     local item_timeout="${WORKSHOP_ITEM_TIMEOUT:-3h}"
-    local attempt log_file steam_status
+    local attempt log_file steam_status last_reason
+    local -a validate_arg=()
+
+    [[ "$retries" =~ ^[1-9][0-9]*$ ]] \
+        || die "WORKSHOP_RETRIES muss eine positive ganze Zahl sein."
+    [[ "$retry_delay" =~ ^[0-9]+$ ]] \
+        || die "WORKSHOP_RETRY_DELAY muss eine nichtnegative ganze Zahl sein."
+    if [[ "${WORKSHOP_VALIDATE:-0}" == "1" ]]; then
+        validate_arg=(validate)
+    fi
+
+    DOWNLOAD_ERROR=""
+    last_reason="Unbekannter SteamCMD-Fehler"
 
     for ((attempt=1; attempt<=retries; attempt++)); do
         log "Lade $name ($workshop_id), Versuch $attempt/$retries ..."
@@ -164,7 +253,7 @@ download_workshop_item() {
             runuser -u "$ARMA_USER" -- env HOME="$ARMA_HOME" "$STEAMCMD_DIR/steamcmd.sh" \
             +force_install_dir "$WORKSHOP_DIR" \
             "${login_args[@]}" \
-            +workshop_download_item 107410 "$workshop_id" validate \
+            +workshop_download_item 107410 "$workshop_id" "${validate_arg[@]}" \
             +quit 2>&1 | tee "$log_file"
         steam_status=${PIPESTATUS[0]}
         set -e
@@ -177,28 +266,73 @@ download_workshop_item() {
             return 0
         fi
 
+        if (( steam_status == 124 || steam_status == 137 )); then
+            last_reason="Zeitüberschreitung nach $item_timeout"
+        elif (( steam_status != 0 )); then
+            last_reason="SteamCMD endete mit Exit-Code $steam_status"
+        elif grep -Fq "Success. Downloaded item $workshop_id" "$log_file"; then
+            last_reason="SteamCMD meldete Erfolg, aber das Downloadverzeichnis fehlt"
+        else
+            last_reason="SteamCMD meldete keinen erfolgreichen Download"
+        fi
+
         rm -f "$log_file"
         if (( attempt < retries )); then
-            log "Download fehlgeschlagen. Neuer Versuch in ${retry_delay}s ..."
+            log "Download fehlgeschlagen: $last_reason. Neuer Versuch in ${retry_delay}s ..."
             sleep "$retry_delay"
         fi
     done
 
-    die "Workshop-Mod konnte nach $retries Versuchen nicht geladen werden: $name ($workshop_id)"
+    DOWNLOAD_ERROR="$last_reason nach $retries Versuchen"
+    log "FEHLER: $name ($workshop_id) konnte nicht geladen werden. Der nächste Mod wird versucht."
+    return 1
 }
 
-update_mods() {
+sync_workshop_item() {
+    local name="$1" workshop_id="$2" target="$3"
+    local source_dir target_dir
+
+    if ! source_dir=$(workshop_source "$workshop_id"); then
+        DOWNLOAD_ERROR="Downloadverzeichnis fehlt"
+        return 1
+    fi
+
+    target_dir="$SERVER_DIR/mods/$target"
+    log "Synchronisiere $name -> $target"
+
+    if ! install -d -o "$ARMA_USER" -g "$ARMA_USER" -m 0750 "$target_dir"; then
+        DOWNLOAD_ERROR="Zielordner konnte nicht angelegt werden"
+        return 1
+    fi
+    if ! rsync -a --delete "$source_dir/" "$target_dir/"; then
+        DOWNLOAD_ERROR="rsync ist fehlgeschlagen"
+        return 1
+    fi
+    if ! chown -R "$ARMA_USER:$ARMA_USER" "$target_dir"; then
+        DOWNLOAD_ERROR="Besitzrechte konnten nicht gesetzt werden"
+        return 1
+    fi
+    if ! as_arma3 python3 "$CONTROL_ROOT/scripts/lowercase_tree.py" "$target_dir"; then
+        DOWNLOAD_ERROR="Dateinamen konnten nicht kleingeschrieben werden"
+        return 1
+    fi
+
+    return 0
+}
+
+update_mods_core() {
     require_root
     ensure_steamcmd
-    stop_for_maintenance
-    trap restart_after_maintenance EXIT
 
     local -a login_args=()
+    local -A failed_download_ids=()
     local mod_count=0
-    local name type workshop_id target enabled source_dir target_dir
+    local name type workshop_id target enabled
+    local result=0
     while IFS= read -r -d '' token; do login_args+=("$token"); done < <(steam_login_args)
 
     while IFS=, read -r name type workshop_id target enabled; do
+        enabled=${enabled%$'\r'}
         [[ "$name" == "name" ]] && continue
         [[ "$enabled" == "1" && "$type" == "workshop" ]] || continue
         [[ "$workshop_id" =~ ^[0-9]+$ ]] || die "Ungültige Workshop-ID für $name"
@@ -207,29 +341,50 @@ update_mods() {
     done < "$MODS_FILE"
 
     (( mod_count > 0 )) || die "Keine aktivierten Workshop-Mods gefunden."
+    reset_mod_failures
     log "Aktualisiere $mod_count Workshop-Mods einzeln mit Wiederholungsversuchen ..."
 
     while IFS=, read -r name type workshop_id target enabled; do
+        enabled=${enabled%$'\r'}
         [[ "$name" == "name" ]] && continue
         [[ "$enabled" == "1" && "$type" == "workshop" ]] || continue
-        download_workshop_item "$name" "$workshop_id" "${login_args[@]}"
+
+        if ! download_workshop_item "$name" "$workshop_id" "${login_args[@]}"; then
+            failed_download_ids["$workshop_id"]=1
+            record_mod_failure "$name" "$workshop_id" "$target" "download" "$DOWNLOAD_ERROR"
+            result=1
+        fi
     done < "$MODS_FILE"
 
     while IFS=, read -r name type workshop_id target enabled; do
+        enabled=${enabled%$'\r'}
         [[ "$name" == "name" ]] && continue
         [[ "$enabled" == "1" && "$type" == "workshop" ]] || continue
-        source_dir=$(workshop_source "$workshop_id") || die "Downloadverzeichnis fehlt für $name ($workshop_id)"
-        target_dir="$SERVER_DIR/mods/$target"
-        log "Synchronisiere $name -> $target"
-        install -d -o "$ARMA_USER" -g "$ARMA_USER" -m 0750 "$target_dir"
-        rsync -a --delete "$source_dir/" "$target_dir/"
-        chown -R "$ARMA_USER:$ARMA_USER" "$target_dir"
-        as_arma3 python3 "$CONTROL_ROOT/scripts/lowercase_tree.py" "$target_dir"
+        [[ -z "${failed_download_ids[$workshop_id]:-}" ]] || continue
+
+        if ! sync_workshop_item "$name" "$workshop_id" "$target"; then
+            log "FEHLER: $name ($workshop_id) konnte nicht synchronisiert werden. Der nächste Mod wird versucht."
+            record_mod_failure "$name" "$workshop_id" "$target" "sync" "$DOWNLOAD_ERROR"
+            result=1
+        fi
     done < "$MODS_FILE"
 
     sync_keys
+    print_mod_failure_summary
+
+    MOD_UPDATE_RESULT=$result
+}
+
+update_mods() {
+    require_root
+    stop_for_maintenance
+    trap restart_after_maintenance EXIT
+
+    update_mods_core
+
     trap - EXIT
     restart_after_maintenance
+    return "$MOD_UPDATE_RESULT"
 }
 
 update_server() {
@@ -239,6 +394,19 @@ update_server() {
     steam_update_server
     trap - EXIT
     restart_after_maintenance
+}
+
+update_all() {
+    require_root
+    stop_for_maintenance
+    trap restart_after_maintenance EXIT
+
+    steam_update_server
+    update_mods_core
+
+    trap - EXIT
+    restart_after_maintenance
+    return "$MOD_UPDATE_RESULT"
 }
 
 backup_server() {
@@ -259,6 +427,7 @@ backup_server() {
         rsync -a "$ARMA_HOME/.local/share/Arma 3 - Other Profiles/" "$stage/profile/"
 
     while IFS=, read -r name type workshop_id target enabled; do
+        enabled=${enabled%$'\r'}
         [[ "$name" == "name" ]] && continue
         [[ "$type" == "local" ]] || continue
         [[ -d "$SERVER_DIR/mods/$target" ]] && rsync -a "$SERVER_DIR/mods/$target" "$stage/local-mods/"
@@ -271,7 +440,7 @@ backup_server() {
 }
 
 doctor() {
-    local errors=0 warnings=0
+    local errors=0 warnings=0 uppercase
     echo "=== TF133 Arma 3 Diagnose ==="
     printf 'Server-Unit: '; systemctl is-active "$SERVER_UNIT" 2>/dev/null || true
     printf 'Serververzeichnis: %s\n' "$SERVER_DIR"
@@ -282,6 +451,7 @@ doctor() {
     done
 
     while IFS=, read -r name type workshop_id target enabled; do
+        enabled=${enabled%$'\r'}
         [[ "$name" == "name" || "$enabled" != "1" ]] && continue
         if [[ ! -d "$SERVER_DIR/mods/$target" ]]; then
             echo "MOD FEHLT: $name ($target)"
@@ -309,7 +479,7 @@ Verwendung: arma3ctl <Befehl>
   steam-login      SteamCMD interaktiv anmelden und Steam Guard bestätigen
   install-server   Dedicated Server installieren oder validieren
   update-server    Server stoppen, aktualisieren und wieder starten
-  update-mods      Workshop-Mods aktualisieren, kleinschreiben und Keys synchronisieren
+  update-mods      Workshop-Mods aktualisieren, Fehler protokollieren und fortfahren
   update-all       Server und Mods aktualisieren
   sync-keys        Keys der aktivierten Mods synchronisieren
   backup           Konfiguration, Missionen, Profile und lokale Mods sichern
@@ -321,6 +491,11 @@ USAGE
 
 command="${1:-}"
 case "$command" in
+    steam-login|install-server|update-server|update-mods|update-all|sync-keys|backup|start|stop|restart)
+        acquire_maintenance_lock
+        ;;
+esac
+case "$command" in
     steam-login)
         require_root; ensure_steamcmd
         [[ -n "${STEAM_USER:-}" ]] || die "STEAM_USER zuerst in $ENV_FILE setzen."
@@ -329,7 +504,7 @@ case "$command" in
     install-server) require_root; steam_update_server ;;
     update-server) update_server ;;
     update-mods) update_mods ;;
-    update-all) update_server; update_mods ;;
+    update-all) update_all ;;
     sync-keys) sync_keys ;;
     backup) backup_server ;;
     start|stop|restart) require_root; systemctl "$command" "$SERVER_UNIT" ;;
