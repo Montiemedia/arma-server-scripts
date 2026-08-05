@@ -10,7 +10,7 @@ Noch nie einen Linux-Server eingerichtet? Dann beginne mit der
 - FastAPI-Webpanel ohne Node.js-Buildkette
 - Start, Stopp und Neustart über systemd
 - Aktualisierung des Dedicated Servers über SteamCMD App-ID `233780`
-- Aktualisierung der 23 Workshop-Mods aus `TF133_Alive.html`
+- Einzelaktualisierung der Workshop-Mods mit Wiederholungsversuchen und Fehlerprotokoll
 - Einträge für die beiden lokalen Kane-Mods
 - automatische Kleinschreibung aller Moddateien für Linux
 - Synchronisierung der `.bikey`-Dateien
@@ -84,9 +84,16 @@ sudo -u arma3 python3 /opt/arma3-control/scripts/lowercase_tree.py \
 
 ```bash
 sudo /opt/arma3-control/scripts/arma3ctl update-mods
+sudo cat /home/arma3/state/failed-mods.csv
 sudo /opt/arma3-control/scripts/arma3ctl doctor
 sudo systemctl start arma3-server
 ```
+
+Jeder Workshop-Mod wird einzeln versucht. Ein fehlgeschlagener Download beendet
+den Durchlauf nicht; erfolgreiche Mods werden weiterhin synchronisiert. Fehler
+stehen am Ende der Ausgabe und dauerhaft in
+`/home/arma3/state/failed-mods.csv`. Wenn mindestens ein Mod fehlschlägt,
+endet der vollständige Lauf mit Exit-Code `1`.
 
 Das Panel ist anschließend über `https://<IPv4-Adresse>` erreichbar. Das Bootstrap-Script erzeugt zunächst ein selbstsigniertes Zertifikat, weshalb der Browser beim ersten Aufruf warnt. Vor einer dauerhaften öffentlichen Nutzung sollte eine Domain mit einem regulären TLS-Zertifikat eingerichtet werden.
 
