@@ -160,8 +160,21 @@ sudo -u arma3 python3 /opt/arma3-control/scripts/lowercase_tree.py /home/arma3/s
 sudo /opt/arma3-control/scripts/arma3ctl update-mods
 ```
 
-Auch dieser Download kann lange dauern. Das Script lädt alle aktivierten Mods,
-vereinheitlicht die Dateinamen und kopiert die Signaturschlüssel.
+Auch dieser Download kann lange dauern. Das Script lädt alle aktivierten Mods
+einzeln und versucht einen fehlgeschlagenen Mod standardmäßig viermal. Scheitert
+ein Mod endgültig, arbeitet das Script trotzdem mit dem nächsten Mod weiter.
+
+Nach dem vollständigen Durchlauf zeigt das Script alle Fehler an. Zusätzlich
+werden sie hier gespeichert:
+
+```bash
+sudo cat /home/arma3/state/failed-mods.csv
+```
+
+Steht dort nur die Kopfzeile, ist kein Mod fehlgeschlagen. Enthält die Datei
+weitere Zeilen, endet `update-mods` nach der Verarbeitung aller übrigen Mods
+mit Exit-Code `1`. Das ist beabsichtigt und macht den Teilfehler für das
+Webpanel und Automatisierungen sichtbar.
 
 ## 10. Installation prüfen
 
