@@ -27,10 +27,10 @@ jobs:
         run: python -m pip install -r backend/requirements.txt
 
       - name: Validate shell scripts
-        run: bash -n scripts/arma3ctl scripts/start-server.sh scripts/bootstrap.sh tests/test_start_server.sh
+        run: bash -n scripts/arma3ctl scripts/start-server.sh scripts/bootstrap.sh tests/test_start_server.sh tests/test_arma3ctl_mod_failures.sh
 
       - name: Run project tests
         run: make test
 
       - name: Run ShellCheck
-        run: shellcheck scripts/arma3ctl scripts/start-server.sh scripts/bootstrap.sh tests/test_start_server.sh
+        run: shellcheck scripts/arma3ctl scripts/start-server.sh scripts/bootstrap.sh tests/test_start_server.sh tests/test_arma3ctl_mod_failures.sh
