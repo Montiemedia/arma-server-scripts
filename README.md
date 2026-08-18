@@ -1,98 +1,205 @@
-# TF133 Arma 3 Control
+# TF133 Arma 3 Server Toolkit
 
-Schlankes Web-Panel und Serverscript für einen modifizierten Arma-3-Dedicated-Server unter Ubuntu 24.04 (x86-64). Das Projekt ist auf einen einzelnen Linux-Host mit systemd, maximal 20 Spieler und den vorhandenen TF133-ALiVE-Modsatz ausgelegt. Windows wird weder als Serverplattform unterstützt noch in der Installation berücksichtigt.
+Linux-Toolkit für einen modifizierten Arma-3-Dedicated-Server der Task Force 133. Das Repository fasst die bisher gebauten Server-Skripte, Modverwaltung, systemd-Services, Diagnose, Backups und das Webpanel zusammen.
 
-Noch nie einen Linux-Server eingerichtet? Dann beginne mit der
-[Installationsanleitung für Einsteiger](INSTALLATION-EINFACH.md).
+Ziel: Ein frischer Ubuntu-Server soll mit möglichst wenigen Eingaben reproduzierbar eingerichtet werden können.
 
-## Enthalten
+## Schnellstart
 
-- FastAPI-Webpanel ohne Node.js-Buildkette
-- Start, Stopp und Neustart über systemd
-- Aktualisierung des Dedicated Servers über SteamCMD App-ID `233780`
-- Aktualisierung der 23 Workshop-Mods aus `TF133_Alive.html`
-- Einträge für die beiden lokalen Kane-Mods
-- automatische Kleinschreibung aller Moddateien für Linux
-- Synchronisierung der `.bikey`-Dateien
-- Backups von Konfiguration, Missionen, Profilen und lokalen Mods
-- Diagnosefunktion für Dateien, Mods, Schreibweise, Speicher und Ports
-- Nginx-Reverse-Proxy mit Basic Auth und restriktiven Browser-Headern
-- eng begrenzte sudo-Regeln für das Panel
-- Same-Origin-Prüfung für schreibende Webaktionen
-- systemweiter Wartungs-Lock gegen parallele Updates und Serveraktionen
+Auf Ubuntu 24.04:
+
+```bash
+sudo apt update
+sudo apt install -y git
+git clone https://github.com/Montiemedia/arma-server-scripts.git
+cd arma-server-scripts
+sudo bash ./scripts/install.sh
+```
+
+Der Installer fragt nur die Werte ab, die nicht sinnvoll erraten werden können:
+
+- Steam-Benutzer
+- Servername
+- optionales Server-Passwort
+- maximale Spielerzahl
+- Game-Port
+- optional eine Steam64-ID als fester Admin
+
+Das Arma-Admin-Kennwort und das Webpanel-Kennwort werden automatisch erzeugt. Steam-Kennwörter werden nicht gespeichert.
+
+## Was automatisch erledigt wird
+
+- Linux-Abhängigkeiten installieren
+- Benutzer und Verzeichnisse anlegen
+- SteamCMD installieren
+- Arma 3 Dedicated Server über App-ID `233780` installieren/validieren
+- Workshop-Mods aus `config/mods.csv` einzeln herunterladen
+- fehlgeschlagene Mods protokollieren und mit den übrigen Mods fortfahren
+- Moddateien für Linux auf konsistente Kleinschreibung normalisieren
+- `.bikey`-Dateien der vorhandenen Mods synchronisieren
+- `server.cfg` erzeugen
+- systemd-Services installieren
+- Webpanel und nginx installieren
+- Backups und Diagnosewerkzeuge bereitstellen
+- Missionspfad auf Linux korrekt als `mpmissions` verwenden
+- typische Missionsfehler wie `template = "Mission.Stratis.pbo"` erkennen
 
 ## Zielstruktur
 
 ```text
-/opt/arma3-control/                  Panel und root-eigene Steuerscripte
+/opt/arma3-control/                  installierte Steuerung/Webpanel
 /etc/arma3/arma3.env                 zentrale Pfade und Startparameter
 /etc/arma3/mods.csv                  Modliste
 /home/arma3/server/                  Arma-3-Server
 /home/arma3/server/mods/             normalisierte Modordner
-/home/arma3/server/MPMissions/       Missionen
+/home/arma3/server/mpmissions/       Multiplayer-Missionen
+/home/arma3/server/keys/             akzeptierte Mod-Keys
 /home/arma3/steamcmd/                SteamCMD
 /home/arma3/workshop/                Workshop-Downloadbereich
+/home/arma3/state/                   Status/Fehlerlisten
 /home/arma3/backups/                 Sicherungen
-/var/lib/arma3-panel/jobs/           Auftragsstatus und Ausgaben
+/var/lib/arma3-panel/jobs/           Panel-Auftragsstatus
 ```
 
-## Installation auf Ubuntu 24.04
+## Wichtige Linux-Fallen, die das Toolkit abfängt
 
-Repository auf den Server kopieren und dann ausführen:
+### `mpmissions` statt `MPMissions`
 
-```bash
-cd arma3-control
-sudo ./scripts/bootstrap.sh
-```
-
-Die initialen Zugangsdaten werden root-exklusiv abgelegt:
-
-```bash
-sudo cat /root/arma3-initial-credentials.txt
-```
-
-Danach den Steam-Benutzer in `/etc/arma3/arma3.env` eintragen. Für Workshop-Downloads ist ein getrenntes Steam-Konto sinnvoll. Das Kennwort wird bewusst nicht in der Konfigurationsdatei gespeichert.
-
-```bash
-sudo nano /etc/arma3/arma3.env
-sudo /opt/arma3-control/scripts/arma3ctl steam-login
-sudo /opt/arma3-control/scripts/arma3ctl install-server
-```
-
-Beim interaktiven Steam-Login kann Steam Guard bestätigt werden. Danach verwendet SteamCMD seine lokal gecachten Anmeldedaten.
-
-## Lokale Kane-Mods
-
-Die beiden lokalen Mods werden nicht über Steam heruntergeladen. Die entpackten Ordner müssen so vorliegen:
+Linux unterscheidet Groß- und Kleinschreibung. Das Toolkit verwendet deshalb konsequent:
 
 ```text
-/home/arma3/server/mods/@kane_3cb_alive_civilian
-/home/arma3/server/mods/@kane_3cb_middle_east_civilian_alive
+/home/arma3/server/mpmissions
 ```
 
-Danach:
+Eine alte `MPMissions`-Struktur wird beim Setup nach `mpmissions` übernommen.
 
-```bash
-sudo chown -R arma3:arma3 /home/arma3/server/mods/@kane_*
-sudo -u arma3 python3 /opt/arma3-control/scripts/lowercase_tree.py \
-  /home/arma3/server/mods/@kane_3cb_alive_civilian
-sudo -u arma3 python3 /opt/arma3-control/scripts/lowercase_tree.py \
-  /home/arma3/server/mods/@kane_3cb_middle_east_civilian_alive
+### Missionsname in `server.cfg`
+
+Richtig:
+
+```cpp
+template = "test.VR";
 ```
 
-## Mods installieren und Server starten
+Falsch:
+
+```cpp
+template = "test.VR.pbo";
+```
+
+`arma3ctl doctor` meldet diesen Fehler automatisch.
+
+### Mod-Downloads
+
+Ein kaputter Workshop-Download beendet nicht mehr den gesamten Durchlauf. Jeder Mod bekommt mehrere Versuche. Fehler landen am Ende in:
+
+```text
+/home/arma3/state/failed-mods.txt
+```
+
+Danach kann einfach erneut ausgeführt werden:
 
 ```bash
 sudo /opt/arma3-control/scripts/arma3ctl update-mods
-sudo /opt/arma3-control/scripts/arma3ctl doctor
-sudo systemctl start arma3-server
 ```
 
-Das Panel ist anschließend über `https://<IPv4-Adresse>` erreichbar. Das Bootstrap-Script erzeugt zunächst ein selbstsigniertes Zertifikat, weshalb der Browser beim ersten Aufruf warnt. Vor einer dauerhaften öffentlichen Nutzung sollte eine Domain mit einem regulären TLS-Zertifikat eingerichtet werden.
+## Standardkonfiguration TF133
+
+Der geführte Installer verwendet derzeit folgende Defaults:
+
+```text
+Servername:          Task Force 133 - Eventserver
+Spieler:             60
+Port:                2302
+verifySignatures:    0
+BattlEye:            0
+persistent:          0
+VoN:                 aktiviert
+```
+
+Kennwörter und persönliche Admin-IDs werden nicht im öffentlichen Repository hinterlegt.
+
+## Bedienung
+
+```bash
+sudo /opt/arma3-control/scripts/arma3ctl start
+sudo /opt/arma3-control/scripts/arma3ctl stop
+sudo /opt/arma3-control/scripts/arma3ctl restart
+sudo /opt/arma3-control/scripts/arma3ctl status
+sudo /opt/arma3-control/scripts/arma3ctl logs 300
+sudo /opt/arma3-control/scripts/arma3ctl update-server
+sudo /opt/arma3-control/scripts/arma3ctl update-mods
+sudo /opt/arma3-control/scripts/arma3ctl update-all
+sudo /opt/arma3-control/scripts/arma3ctl sync-keys
+sudo /opt/arma3-control/scripts/arma3ctl missions
+sudo /opt/arma3-control/scripts/arma3ctl backup
+sudo /opt/arma3-control/scripts/arma3ctl doctor
+```
+
+## Missionen installieren
+
+PBO-Dateien nach folgendem Verzeichnis kopieren:
+
+```text
+/home/arma3/server/mpmissions/
+```
+
+Danach prüfen:
+
+```bash
+sudo /opt/arma3-control/scripts/arma3ctl missions
+sudo /opt/arma3-control/scripts/arma3ctl doctor
+```
+
+Eine feste Missionsrotation kann anschließend in `/home/arma3/server/server.cfg` definiert werden. Der `template`-Wert enthält den Missionsnamen inklusive Kartenname, aber ohne `.pbo`.
+
+## Mods
+
+Die zentrale Liste liegt in:
+
+```text
+config/mods.csv
+```
+
+Format:
+
+```csv
+name,type,workshop_id,target,enabled
+ace,workshop,463939057,@ace,1
+```
+
+Lokale Mods können ebenfalls eingetragen werden:
+
+```csv
+Mein lokaler Mod,local,,@mein_mod,1
+```
+
+Das Startskript baut `-mod=` automatisch aus allen aktivierten und vorhandenen Modverzeichnissen zusammen.
+
+## Diagnose
+
+```bash
+sudo /opt/arma3-control/scripts/arma3ctl doctor
+```
+
+Geprüft werden unter anderem:
+
+- Serverbinary und Configs
+- `mpmissions`-Schreibweise
+- Missions-PBOs
+- `.pbo` fälschlich im `template`-Wert
+- aktivierte, aber fehlende Mods
+- Großbuchstaben innerhalb der Linux-Modstruktur
+- Fehlerliste des letzten Modupdates
+- Ports und freier Speicher
 
 ## Firewall
 
-Arma 3 benötigt für die erste Instanz standardmäßig UDP `2302` bis `2306`. Der Server braucht eine echte öffentliche IPv4-Adresse. Die Firewall nicht blind aktivieren, wenn SSH auf einem abweichenden Port läuft.
+Arma 3 verwendet für die erste Instanz typischerweise UDP `2302` bis `2306`.
+
+Der Installer aktiviert UFW absichtlich nicht automatisch, weil ein unbekannter SSH-Port sonst den Administrator aussperren könnte.
+
+Bei Standard-SSH:
 
 ```bash
 sudo ufw allow OpenSSH
@@ -102,57 +209,30 @@ sudo ufw allow 2302:2306/udp
 sudo ufw enable
 ```
 
-## TLS mit eigener Domain
+## Webpanel
 
-Nach Eintrag eines DNS-A/AAAA-Records die Nginx-Datei anpassen:
+Das vorhandene schlanke FastAPI-Webpanel bleibt Bestandteil des Projekts. Es bietet Serveraktionen über systemd, Updates, Backups, Diagnose und Logs. nginx schützt das Panel mit Basic Auth und HTTPS.
 
-```bash
-sudo nano /etc/nginx/sites-available/arma3-panel.conf
+Initiale Zugangsdaten werden lokal gespeichert unter:
+
+```text
+/root/arma3-initial-credentials.txt
 ```
 
-`server_name _;` durch die Domain ersetzen. Danach kann beispielsweise Certbot verwendet werden. Das selbstsignierte Zertifikat kann anschließend durch ein reguläres Zertifikat ersetzt werden. HTTP wird bereits automatisch auf HTTPS umgeleitet.
+Diese Datei nach Übernahme der Kennwörter löschen.
 
-## Bedienung ohne Webpanel
+## Manuelle Installation
+
+Wer den geführten Installer nicht verwenden möchte, kann weiterhin nur das Grundsystem installieren:
 
 ```bash
-sudo /opt/arma3-control/scripts/arma3ctl start
-sudo /opt/arma3-control/scripts/arma3ctl stop
-sudo /opt/arma3-control/scripts/arma3ctl restart
-sudo /opt/arma3-control/scripts/arma3ctl update-server
-sudo /opt/arma3-control/scripts/arma3ctl update-mods
-sudo /opt/arma3-control/scripts/arma3ctl update-all
-sudo /opt/arma3-control/scripts/arma3ctl backup
-sudo /opt/arma3-control/scripts/arma3ctl sync-keys
-sudo /opt/arma3-control/scripts/arma3ctl doctor
-sudo /opt/arma3-control/scripts/arma3ctl logs 300
+sudo bash ./scripts/bootstrap.sh
 ```
 
-## Wichtige Grenzen dieses ersten Stands
+Danach stehen die einzelnen `arma3ctl`-Befehle zur Verfügung.
 
-- Keine RCON-Konsole und keine Ingame-Adminbefehle im Browser
-- Noch keine Anzeige verbundener Spieler
-- Keine Bearbeitung von `server.cfg` oder Missionen im Browser
-- Keine automatische TLS-Einrichtung
-- Keine automatische Installation der beiden lokalen Mods
+## Grundprinzip
 
-Diese Funktionen sind bewusst nicht halbgar eingebaut. Der erste Stand konzentriert sich auf kontrollierbare Serveraktionen, Updates, Backups und nachvollziehbare Logs.
+Das Repository enthält keine echten Server-Passwörter, keine Steam-Kennwörter und keine privaten Tokens. Konfigurationen werden aus Vorlagen beziehungsweise während der Installation erzeugt.
 
-## Betriebssicherheit
-
-Schreibende Browseranfragen werden anhand von `Origin`, `Referer` und
-`Sec-Fetch-Site` auf denselben Ursprung begrenzt. Direkte CLI-Anfragen ohne
-Browser-Header bleiben möglich und müssen weiterhin die Nginx Basic Auth
-passieren.
-
-Alle verändernden `arma3ctl`-Befehle verwenden zusätzlich
-`/run/lock/arma3-control.lock`. Dadurch können Webpanel, Administratoren und
-Automatisierungen keine konkurrierenden Updates oder Serveraktionen starten.
-`update-all` hält den Server während Server- und Modaktualisierung durchgehend
-gestoppt und startet ihn erst danach wieder.
-
-## Offizielle technische Referenzen
-
-- Bohemia Interactive Community Wiki: Arma 3 Dedicated Server
-- Bohemia Interactive Community Wiki: Arma 3 Startup Parameters
-- Bohemia Interactive Community Wiki: Arma 3 Server Configuration
-- Valve Developer Community: SteamCMD
+Serverbetrieb und Fehlerbehandlung sollen reproduzierbar sein: keine zehn Copy-and-Paste-Zettel, keine versteckten Pfade und kein komplettes Abbrechen eines 25-Mod-Downloads nur weil Steam bei Mod Nummer 7 gerade schlechte Laune hat.

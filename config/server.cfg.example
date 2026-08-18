@@ -1,33 +1,50 @@
-hostname = "TF133 ALiVE";
+// TF133 Arma 3 Dedicated Server – Vorlage
+// Keine echten Kennwörter in Git committen.
+
+hostname = "Task Force 133 - Eventserver";
+logFile = "server_console.log";
 password = "";
 passwordAdmin = "CHANGE_ME_IMMEDIATELY";
+maxPlayers = 60;
 
-maxPlayers = 20;
+// Sicherheit
+verifySignatures = 0;
+equalModRequired = 0;
 kickDuplicate = 1;
-verifySignatures = 2;
 allowedFilePatching = 0;
+admins[] = {};
+BattlEye = 0;
 
-motd[] = {
-    "Willkommen auf dem TF133 ALiVE Server.",
-    "Teamplay, klare Kommunikation und kein Kindergarten."
+// Voice
+disableVoN = 0;
+vonCodec = 1;
+vonCodecQuality = 30;
+
+// Serververhalten
+persistent = 0;
+timeStampFormat = "full";
+
+// Voting
+voteMissionPlayers = 1;
+voteThreshold = 0.33;
+
+motd[] =
+{
+    "Willkommen auf dem Task Force 133 Server!",
+    "Alles frei von Verpflichtungen, unverkrampft und gemeinsam Spaß haben."
 };
 motdInterval = 5;
 
-persistent = 1;
-BattlEye = 1;
-
-voteMissionPlayers = 99;
-voteThreshold = 0.99;
-
-// Trage berechtigte Steam-UIDs ein. Diese können #login ohne Kennwort verwenden.
-admins[] = {};
-
-// Mission später gezielt ergänzen. Beispiel:
+// Missionsrotation optional.
+// WICHTIG:
+// 1. Linux-Verzeichnis: /home/arma3/server/mpmissions
+// 2. template ohne Dateiendung .pbo angeben.
+//
 // class Missions
 // {
 //     class TF133
 //     {
-//         template = "missionname.mapname";
-//         difficulty = "Custom";
+//         template = "MissionName.Stratis";
+//         difficulty = "Veteran";
 //     };
 // };
