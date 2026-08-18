@@ -2,7 +2,7 @@
 set -Eeuo pipefail
 umask 027
 
-[[ $EUID -eq 0 ]] || { echo "Bitte als root ausführen: sudo ./scripts/bootstrap.sh" >&2; exit 1; }
+[[ $EUID -eq 0 ]] || { echo "Bitte als root ausführen: sudo bash ./scripts/bootstrap.sh" >&2; exit 1; }
 
 SOURCE_ROOT=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
 TARGET_ROOT=/opt/arma3-control
@@ -47,9 +47,18 @@ install -o root -g "$OPS_GROUP" -m 0640 "$TARGET_ROOT/config/mods.csv" /etc/arma
 
 install -d -o "$ARMA_USER" -g "$ARMA_USER" -m 0750 \
     /home/arma3/steamcmd /home/arma3/server /home/arma3/server/mods \
-    /home/arma3/server/MPMissions /home/arma3/workshop /home/arma3/backups \
+    /home/arma3/server/mpmissions /home/arma3/workshop /home/arma3/backups \
     /home/arma3/state "/home/arma3/.local/share/Arma 3" \
     "/home/arma3/.local/share/Arma 3 - Other Profiles"
+
+# Frühere Versionen des Projekts verwendeten MPMissions. Unter Linux ist die
+# Schreibweise relevant; vorhandene Missionen werden einmalig übernommen.
+if [[ -d /home/arma3/server/MPMissions ]]; then
+    log "Übernehme vorhandene Missionen aus MPMissions nach mpmissions ..."
+    rsync -a /home/arma3/server/MPMissions/ /home/arma3/server/mpmissions/
+    rm -rf /home/arma3/server/MPMissions
+fi
+chown -R "$ARMA_USER:$ARMA_USER" /home/arma3/server/mpmissions
 
 panel_password=$(openssl rand -hex 12)
 server_admin_password=""
@@ -118,27 +127,22 @@ systemctl enable arma3-server.service
 
 cat <<RESULT
 
-Installation des Panels abgeschlossen.
+Grundinstallation abgeschlossen.
 
 Initiale Zugangsdaten:
   $CREDENTIAL_FILE
 
-Nächste Schritte:
+Empfohlener Einstieg für eine komplette Neuinstallation:
+  sudo bash ./scripts/install.sh
+
+Manuelle nächsten Schritte:
   1. STEAM_USER in /etc/arma3/arma3.env setzen.
   2. sudo /opt/arma3-control/scripts/arma3ctl steam-login
   3. sudo /opt/arma3-control/scripts/arma3ctl install-server
-  4. Lokale Kane-Mods nach /home/arma3/server/mods/ kopieren.
+  4. Lokale Mods ggf. nach /home/arma3/server/mods/ kopieren.
   5. sudo /opt/arma3-control/scripts/arma3ctl update-mods
   6. sudo /opt/arma3-control/scripts/arma3ctl doctor
   7. sudo systemctl start arma3-server
 
-Firewall erst nach Prüfung des SSH-Ports aktivieren:
-  ufw allow OpenSSH
-  ufw allow 80/tcp
-  ufw allow 443/tcp
-  ufw allow 2302:2306/udp
-  ufw enable
-
-Panel lokal prüfen:
-  curl -k -u armaadmin:<Kennwort> https://127.0.0.1/healthz
+Firewall wird absichtlich nicht automatisch aktiviert.
 RESULT
