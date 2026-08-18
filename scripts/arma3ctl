@@ -19,6 +19,8 @@ source "$ENV_FILE"
 : "${SERVER_UNIT:=arma3-server.service}"
 : "${BACKUP_RETENTION_DAYS:=14}"
 
+FAILED_MODS_FILE="$STATE_DIR/failed-mods.txt"
+
 log() { printf '[%s] %s\n' "$(date '+%F %T')" "$*"; }
 die() { printf 'FEHLER: %s\n' "$*" >&2; exit 1; }
 
@@ -37,10 +39,16 @@ require_root() {
 ensure_dirs() {
     require_root
     install -d -o "$ARMA_USER" -g "$ARMA_USER" -m 0750 \
-        "$STEAMCMD_DIR" "$SERVER_DIR" "$SERVER_DIR/mods" "$SERVER_DIR/MPMissions" \
+        "$STEAMCMD_DIR" "$SERVER_DIR" "$SERVER_DIR/mods" "$SERVER_DIR/mpmissions" \
         "$WORKSHOP_DIR" "$BACKUP_DIR" "$STATE_DIR" \
         "$ARMA_HOME/.local/share/Arma 3" \
         "$ARMA_HOME/.local/share/Arma 3 - Other Profiles"
+
+    if [[ -d "$SERVER_DIR/MPMissions" ]]; then
+        log "Korrigiere Linux-Pfad MPMissions -> mpmissions ..."
+        rsync -a "$SERVER_DIR/MPMissions/" "$SERVER_DIR/mpmissions/"
+        rm -rf "$SERVER_DIR/MPMissions"
+    fi
 }
 
 ensure_steamcmd() {
@@ -136,7 +144,8 @@ sync_keys() {
             local key_name
             key_name=$(basename "$key_path")
             if [[ -e "$keys_dir/$key_name" ]] && ! cmp -s "$key_path" "$keys_dir/$key_name"; then
-                die "Unterschiedliche Keys mit gleichem Namen: $key_name"
+                echo "WARNUNG: Unterschiedliche Keys mit gleichem Namen: $key_name" >&2
+                continue
             fi
             install -o "$ARMA_USER" -g "$ARMA_USER" -m 0640 "$key_path" "$keys_dir/$key_name"
             grep -qxF "$key_name" "$state_file" || echo "$key_name" >> "$state_file"
@@ -184,7 +193,8 @@ download_workshop_item() {
         fi
     done
 
-    die "Workshop-Mod konnte nach $retries Versuchen nicht geladen werden: $name ($workshop_id)"
+    echo "FEHLER: Workshop-Mod nach $retries Versuchen nicht geladen: $name ($workshop_id)" >&2
+    return 1
 }
 
 update_mods() {
@@ -194,8 +204,9 @@ update_mods() {
     trap restart_after_maintenance EXIT
 
     local -a login_args=()
-    local mod_count=0
+    local mod_count=0 failed_count=0 success_count=0
     local name type workshop_id target enabled source_dir target_dir
+    local -a failed_names=()
     while IFS= read -r -d '' token; do login_args+=("$token"); done < <(steam_login_args)
 
     while IFS=, read -r name type workshop_id target enabled; do
@@ -207,18 +218,28 @@ update_mods() {
     done < "$MODS_FILE"
 
     (( mod_count > 0 )) || die "Keine aktivierten Workshop-Mods gefunden."
-    log "Aktualisiere $mod_count Workshop-Mods einzeln mit Wiederholungsversuchen ..."
+    : > "$FAILED_MODS_FILE"
+    chown "$ARMA_USER:$ARMA_USER" "$FAILED_MODS_FILE"
+    log "Aktualisiere $mod_count Workshop-Mods. Fehler stoppen die übrigen Downloads nicht."
 
     while IFS=, read -r name type workshop_id target enabled; do
         [[ "$name" == "name" ]] && continue
         [[ "$enabled" == "1" && "$type" == "workshop" ]] || continue
-        download_workshop_item "$name" "$workshop_id" "${login_args[@]}"
+        if download_workshop_item "$name" "$workshop_id" "${login_args[@]}"; then
+            ((success_count+=1))
+        else
+            printf '%s,%s,%s\n' "$name" "$workshop_id" "$target" >> "$FAILED_MODS_FILE"
+            failed_names+=("$name ($workshop_id)")
+            ((failed_count+=1))
+        fi
     done < "$MODS_FILE"
 
     while IFS=, read -r name type workshop_id target enabled; do
         [[ "$name" == "name" ]] && continue
         [[ "$enabled" == "1" && "$type" == "workshop" ]] || continue
-        source_dir=$(workshop_source "$workshop_id") || die "Downloadverzeichnis fehlt für $name ($workshop_id)"
+        if ! source_dir=$(workshop_source "$workshop_id"); then
+            continue
+        fi
         target_dir="$SERVER_DIR/mods/$target"
         log "Synchronisiere $name -> $target"
         install -d -o "$ARMA_USER" -g "$ARMA_USER" -m 0750 "$target_dir"
@@ -230,6 +251,19 @@ update_mods() {
     sync_keys
     trap - EXIT
     restart_after_maintenance
+
+    echo
+    echo "=== Mod-Update Zusammenfassung ==="
+    echo "Workshop-Mods: $mod_count"
+    echo "Erfolgreich:   $success_count"
+    echo "Fehlgeschlagen:$failed_count"
+    if (( failed_count > 0 )); then
+        echo "Fehlerliste:   $FAILED_MODS_FILE"
+        printf '  - %s\n' "${failed_names[@]}"
+        return 1
+    fi
+    rm -f "$FAILED_MODS_FILE"
+    return 0
 }
 
 update_server() {
@@ -254,7 +288,7 @@ backup_server() {
     for item in server.cfg basic.cfg ban.txt bans.txt; do
         [[ -e "$SERVER_DIR/$item" ]] && cp -a "$SERVER_DIR/$item" "$stage/server/"
     done
-    [[ -d "$SERVER_DIR/MPMissions" ]] && rsync -a "$SERVER_DIR/MPMissions/" "$stage/server/MPMissions/"
+    [[ -d "$SERVER_DIR/mpmissions" ]] && rsync -a "$SERVER_DIR/mpmissions/" "$stage/server/mpmissions/"
     [[ -d "$ARMA_HOME/.local/share/Arma 3 - Other Profiles" ]] && \
         rsync -a "$ARMA_HOME/.local/share/Arma 3 - Other Profiles/" "$stage/profile/"
 
@@ -270,8 +304,16 @@ backup_server() {
     log "Backup erstellt: $archive ($(du -h "$archive" | cut -f1))"
 }
 
+list_missions() {
+    ensure_dirs
+    echo "=== Gefundene Multiplayer-Missionen ==="
+    if ! find "$SERVER_DIR/mpmissions" -maxdepth 1 -type f -iname '*.pbo' -printf '%f\n' | sort | sed 's/\.pbo$//'; then
+        return 1
+    fi
+}
+
 doctor() {
-    local errors=0 warnings=0
+    local errors=0 warnings=0 uppercase mission_count
     echo "=== TF133 Arma 3 Diagnose ==="
     printf 'Server-Unit: '; systemctl is-active "$SERVER_UNIT" 2>/dev/null || true
     printf 'Serververzeichnis: %s\n' "$SERVER_DIR"
@@ -280,6 +322,26 @@ doctor() {
     for file in "$SERVER_DIR/arma3server_x64" "$SERVER_DIR/server.cfg" "$SERVER_DIR/basic.cfg" "$MODS_FILE"; do
         if [[ -e "$file" ]]; then echo "OK: $file"; else echo "FEHLT: $file"; ((errors+=1)); fi
     done
+
+    if [[ -d "$SERVER_DIR/MPMissions" ]]; then
+        echo "FEHLER: $SERVER_DIR/MPMissions existiert. Linux-Pfad muss mpmissions heißen."
+        ((errors+=1))
+    fi
+    if [[ -d "$SERVER_DIR/mpmissions" ]]; then
+        echo "OK: $SERVER_DIR/mpmissions"
+    else
+        echo "FEHLT: $SERVER_DIR/mpmissions"
+        ((errors+=1))
+    fi
+
+    if grep -Eq 'template[[:space:]]*=[[:space:]]*"[^"]+\.pbo"' "$SERVER_DIR/server.cfg" 2>/dev/null; then
+        echo "FEHLER: In server.cfg enthält mindestens ein Missions-template fälschlich .pbo."
+        ((errors+=1))
+    fi
+
+    mission_count=$(find "$SERVER_DIR/mpmissions" -maxdepth 1 -type f -iname '*.pbo' 2>/dev/null | wc -l || true)
+    echo "Missions-PBOs: $mission_count"
+    (( mission_count == 0 )) && { echo "WARNUNG: Keine Missions-PBO gefunden."; ((warnings+=1)); }
 
     while IFS=, read -r name type workshop_id target enabled; do
         [[ "$name" == "name" || "$enabled" != "1" ]] && continue
@@ -292,6 +354,12 @@ doctor() {
     uppercase=$(find "$SERVER_DIR/mods" -mindepth 1 -name '*[A-Z]*' 2>/dev/null | wc -l || true)
     echo "Pfade mit Großbuchstaben unter mods/: $uppercase"
     (( uppercase > 0 )) && ((warnings+=1))
+
+    if [[ -s "$FAILED_MODS_FILE" ]]; then
+        echo "WARNUNG: Letztes Mod-Update hatte Fehler:"
+        sed 's/^/  /' "$FAILED_MODS_FILE"
+        ((warnings+=1))
+    fi
 
     if command -v ss >/dev/null; then
         echo "UDP-Ports 2302-2306:"
@@ -309,13 +377,14 @@ Verwendung: arma3ctl <Befehl>
   steam-login      SteamCMD interaktiv anmelden und Steam Guard bestätigen
   install-server   Dedicated Server installieren oder validieren
   update-server    Server stoppen, aktualisieren und wieder starten
-  update-mods      Workshop-Mods aktualisieren, kleinschreiben und Keys synchronisieren
+  update-mods      Mods aktualisieren; Fehler sammeln und übrige Mods fortsetzen
   update-all       Server und Mods aktualisieren
   sync-keys        Keys der aktivierten Mods synchronisieren
+  missions         Gefundene Missions-PBOs auflisten
   backup           Konfiguration, Missionen, Profile und lokale Mods sichern
   start|stop|restart|status
   logs [ZEILEN]
-  doctor           Installation und Modstruktur prüfen
+  doctor           Installation, Mods und Missionspfade prüfen
 USAGE
 }
 
@@ -331,6 +400,7 @@ case "$command" in
     update-mods) update_mods ;;
     update-all) update_server; update_mods ;;
     sync-keys) sync_keys ;;
+    missions) require_root; list_missions ;;
     backup) backup_server ;;
     start|stop|restart) require_root; systemctl "$command" "$SERVER_UNIT" ;;
     status) systemctl status "$SERVER_UNIT" --no-pager || true ;;
