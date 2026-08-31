@@ -296,14 +296,30 @@ main() {
 
         case "$choice" in
             1) run_ctl start || true ;;
-            2) confirm_action 'Server wirklich stoppen?' && run_ctl stop || true ;;
-            3) confirm_action 'Server wirklich neu starten?' && run_ctl restart || true ;;
+            2)
+                if confirm_action 'Server wirklich stoppen?'; then
+                    run_ctl stop || true
+                fi
+                ;;
+            3)
+                if confirm_action 'Server wirklich neu starten?'; then
+                    run_ctl restart || true
+                fi
+                ;;
             4) run_ctl status || true ;;
             5) show_live_logs ;;
             6) show_recent_logs || true ;;
             7) check_ports || true ;;
-            8) confirm_action 'Workshop-Mods jetzt aktualisieren?' && run_ctl update-mods || true ;;
-            9) confirm_action 'Mod-Keys jetzt synchronisieren?' && run_ctl sync-keys || true ;;
+            8)
+                if confirm_action 'Workshop-Mods jetzt aktualisieren?'; then
+                    run_ctl update-mods || true
+                fi
+                ;;
+            9)
+                if confirm_action 'Mod-Keys jetzt synchronisieren?'; then
+                    run_ctl sync-keys || true
+                fi
+                ;;
             10) run_ctl doctor || true ;;
             11) open_in_editor "$(resolve_config_path "$SERVER_CONFIG")" || true ;;
             12) open_in_editor "$(resolve_config_path "$BASIC_CONFIG")" || true ;;
