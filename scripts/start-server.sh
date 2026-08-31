@@ -22,7 +22,7 @@ cd "$SERVER_DIR"
 
 mods=()
 missing_mods=0
-while IFS=, read -r name type workshop_id target enabled; do
+while IFS=, read -r name _type _workshop_id target enabled; do
     [[ "$name" == "name" ]] && continue
     [[ "$enabled" == "1" ]] || continue
     [[ "$target" =~ ^@[a-z0-9_+.-]+$ ]] || { echo "Ungültiger Modordner in CSV: $target" >&2; exit 1; }

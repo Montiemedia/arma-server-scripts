@@ -62,7 +62,8 @@ runuser() {
         return 1
     fi
 
-    mkdir -p "$WORKSHOP_DIR/steamapps/workshop/content/107410/$workshop_id"
+    mkdir -p "$WORKSHOP_DIR/steamapps/workshop/content/107410/$workshop_id/addons"
+    printf 'test\n' > "$WORKSHOP_DIR/steamapps/workshop/content/107410/$workshop_id/addons/test.pbo"
     printf 'Success. Downloaded item %s\n' "$workshop_id"
 }
 
@@ -89,5 +90,36 @@ update_mods_core > "$TEST_ROOT/output.txt" 2>&1
 grep -Fq '"Defekter Mod","202","@broken","download"' "$FAILED_MODS_FILE"
 grep -Fq '=== Fehlerhafte Mods (1) ===' "$TEST_ROOT/output.txt"
 grep -Fq 'Alle übrigen Mods wurden weiterverarbeitet.' "$TEST_ROOT/output.txt"
+grep -Fq '=== Erfolgreich heruntergeladene Mods (2) ===' "$TEST_ROOT/output.txt"
+grep -Fq 'Erster Mod (101)' "$TEST_ROOT/output.txt"
+grep -Fq 'Letzter Mod (303)' "$TEST_ROOT/output.txt"
+
+# Ein bereits mit DepotDownloader verwalteter Mod muss beim nächsten Lauf
+# direkt darüber aktualisiert werden, ohne bekannte SteamCMD-Fehler zu erzeugen.
+cat > "$TEST_ROOT/mods.csv" <<'CSV'
+name,type,workshop_id,target,enabled
+Fallback Mod,workshop,404,@fallback,1
+CSV
+mkdir -p "$DEPOT_WORKSHOP_DIR/404/addons"
+printf 'test\n' > "$DEPOT_WORKSHOP_DIR/404/addons/fallback.pbo"
+: > "$TEST_ROOT/download-calls.txt"
+: > "$TEST_ROOT/sync-calls.txt"
+: > "$TEST_ROOT/depot-calls.txt"
+
+depotdownloader_available() { return 0; }
+download_with_depotdownloader() {
+    printf '%s\n' "$2" >> "$TEST_ROOT/depot-calls.txt"
+    # shellcheck disable=SC2034  # arma3ctl liest diese globale Zuordnung später aus.
+    WORKSHOP_SOURCE_OVERRIDES["$2"]="$DEPOT_WORKSHOP_DIR/$2"
+    return 0
+}
+
+update_mods_core > "$TEST_ROOT/fallback-output.txt" 2>&1
+
+[[ "$MOD_UPDATE_RESULT" == "0" ]]
+[[ ! -s "$TEST_ROOT/download-calls.txt" ]]
+[[ "$(grep -c '^404$' "$TEST_ROOT/depot-calls.txt")" == "1" ]]
+[[ "$(grep -c '^404$' "$TEST_ROOT/sync-calls.txt")" == "1" ]]
+grep -Fq 'Alle Workshop-Mods wurden erfolgreich verarbeitet.' "$TEST_ROOT/fallback-output.txt"
 
 echo "test_arma3ctl_mod_failures: OK"

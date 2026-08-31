@@ -1,151 +1,134 @@
 # Installation für Einsteiger
 
-Diese Anleitung führt dich durch die Installation auf einem frischen Server
-mit Ubuntu 24.04. Du brauchst keine Linux-Erfahrung. Kopiere die Befehle
-einzeln und warte jeweils, bis der vorherige Befehl fertig ist.
+Diese Anleitung ist für einen frischen Server mit Ubuntu 24.04. Du brauchst
+keine Linux-Erfahrung. Kopiere jeden Befehl vollständig und drücke danach
+`Enter`. Warte immer, bis der Befehl fertig ist.
 
-## Was du vorher brauchst
+## Bevor du anfängst
 
-- einen Server mit Ubuntu 24.04 (64 Bit)
+Du brauchst:
+
+- einen Server mit Ubuntu 24.04 und x86-64
 - die öffentliche IPv4-Adresse des Servers
-- einen Benutzer, der `sudo` verwenden darf
-- ein separates Steam-Konto für die Arma-3-Downloads
+- einen Benutzer mit `sudo`-Rechten
+- ein eigenes Steam-Konto für die Serverdownloads
 - die beiden lokalen Kane-Mods als entpackte Ordner
+- ungefähr 100 GB freien Speicher
 
-Für den Server samt Mods sind 8 GB RAM und 100 GB freier Speicher ein
-vernünftiger Ausgangspunkt. Mehr Spieler und große Missionen brauchen
-entsprechend mehr Leistung.
+Das Steam-Kennwort wird nicht in einer Konfigurationsdatei gespeichert.
 
-> **Wichtig:** Diese Anleitung ist für Ubuntu. Führe die Befehle nicht in der
-> Windows-Eingabeaufforderung aus.
+> Wichtig: Nur der erste SSH-Befehl wird in Windows PowerShell eingegeben.
+> Danach arbeitest du auf dem Ubuntu-Server. Du erkennst das an einer Zeile wie
+> `benutzer@server:~$`.
 
-## 1. Mit dem Server verbinden
+## Schritt 1: Mit dem Server verbinden
 
-Öffne auf deinem PC PowerShell. Ersetze `SERVER_IP` durch die IP-Adresse deines
-Servers:
+Öffne auf deinem Windows-PC PowerShell. Ersetze `DEIN_BENUTZER` und
+`SERVER_IP` durch deine Daten:
 
 ```powershell
 ssh DEIN_BENUTZER@SERVER_IP
 ```
 
-Beim ersten Verbindungsaufbau erscheint eine Rückfrage zum Fingerabdruck.
-Antworte mit `yes`. Gib anschließend das Kennwort deines Serverbenutzers ein.
-Bei der Kennworteingabe werden keine Zeichen angezeigt. Das ist normal.
+Beim ersten Verbindungsaufbau erscheint eine Rückfrage. Schreibe `yes` und
+drücke `Enter`.
 
-## 2. Projekt herunterladen
+Danach wird das Kennwort deines Serverbenutzers abgefragt. Während der Eingabe
+werden keine Zeichen angezeigt. Das ist normal. Tippe das Kennwort trotzdem
+vollständig ein und drücke `Enter`.
 
-Die folgenden Befehle laufen jetzt auf dem Ubuntu-Server:
+Kontrollpunkt: Die Eingabezeile sollte jetzt ungefähr so aussehen:
+
+```text
+DEIN_BENUTZER@SERVER:~$
+```
+
+## Schritt 2: Projekt herunterladen
+
+Diese Befehle werden auf dem Ubuntu-Server eingegeben:
 
 ```bash
 sudo apt update
 sudo apt install -y git
-git clone https://github.com/Montiemedia/arma-server-scripts.git
+git clone --branch fix/resilient-mod-updates --single-branch https://github.com/Montiemedia/arma-server-scripts.git
 cd arma-server-scripts
 ```
 
-Falls der Ordner bereits vorhanden ist:
+Falls `arma-server-scripts` bereits vorhanden ist, nicht noch einmal klonen.
+Verwende stattdessen:
 
 ```bash
 cd arma-server-scripts
 git pull
 ```
 
-## 3. Grundinstallation starten
+Kontrollpunkt:
 
 ```bash
-sudo ./scripts/bootstrap.sh
+ls
 ```
 
-Das dauert einige Minuten. Das Script installiert unter anderem nginx, Python
-und die benötigten 32-Bit-Bibliotheken. Es legt außerdem die Benutzer `arma3`
-und `arma3panel` an.
+In der Ausgabe müssen unter anderem `install.sh`, `README.md` und der Ordner
+`scripts` stehen.
 
-Wenn am Ende `Installation des Panels abgeschlossen` steht, war dieser Schritt
-erfolgreich.
+## Schritt 3: Automatische Installation starten
 
-## 4. Kennwörter notieren
+```bash
+sudo ./install.sh
+```
 
-Die Installation erzeugt ein Kennwort für das Webpanel und eines für den
-Arma-Administrator:
+Der Installer führt dich durch sechs Schritte:
+
+1. Er installiert das Webpanel, die Serverbenutzer und das Administrationsmenü.
+2. Er fragt nach dem Namen des Steam-Kontos. Hier gehört kein Kennwort hinein.
+3. SteamCMD fragt nach dem Steam-Kennwort und eventuell nach Steam Guard.
+4. DepotDownloader wird als Ausweichlösung für schwierige Workshop-Mods eingerichtet.
+5. Der Arma 3 Dedicated Server wird heruntergeladen.
+6. Die Workshop-Mods werden auf Wunsch heruntergeladen.
+
+Große Downloads können mehrere Stunden dauern. Das Terminal muss dabei geöffnet
+bleiben.
+
+Wenn Steam nach einem Kennwort fragt und nichts auf dem Bildschirm erscheint,
+ist nichts kaputt. Linux zeigt Kennwörter bei der Eingabe nicht an.
+
+Kontrollpunkt: Am Ende muss dieser Satz erscheinen:
+
+```text
+Die automatische Grundinstallation ist fertig.
+```
+
+Der Installer kann später erneut gestartet werden. Vorhandene `server.cfg`,
+`basic.cfg`, Steam-Einstellungen, Modliste und Panel-Zugangsdaten bleiben dabei
+erhalten.
+
+## Schritt 4: Zugangsdaten anzeigen
 
 ```bash
 sudo cat /root/arma3-initial-credentials.txt
 ```
 
-Speichere beide Kennwörter in einem Passwortmanager. Lösche die Datei erst,
-wenn du sicher bist, dass du die Kennwörter gespeichert hast:
+Notiere das Panel-Kennwort und das Arma-Admin-Kennwort in einem
+Passwortmanager. Wenn dort steht, dass das Panel-Kennwort unverändert bleibt,
+gilt das Kennwort der ersten Installation weiter.
 
-```bash
-sudo rm /root/arma3-initial-credentials.txt
-```
+## Schritt 5: Lokale Kane-Mods kopieren
 
-## 5. Steam-Benutzer eintragen
-
-Öffne die Konfiguration:
-
-```bash
-sudo nano /etc/arma3/arma3.env
-```
-
-Suche diese Zeile:
-
-```text
-STEAM_USER=
-```
-
-Trage rechts vom Gleichheitszeichen den Steam-Benutzernamen ein, zum Beispiel:
-
-```text
-STEAM_USER=mein_steam_name
-```
-
-Speichern und schließen:
-
-1. `Strg` + `O` drücken
-2. mit `Enter` bestätigen
-3. `Strg` + `X` drücken
-
-Das Steam-Kennwort gehört **nicht** in diese Datei.
-
-## 6. Bei Steam anmelden
-
-```bash
-sudo /opt/arma3-control/scripts/arma3ctl steam-login
-```
-
-SteamCMD fragt nach dem Kennwort und möglicherweise nach einem Steam-Guard-Code.
-Nach erfolgreicher Anmeldung gibst du Folgendes ein:
-
-```text
-quit
-```
-
-## 7. Arma-3-Server installieren
-
-```bash
-sudo /opt/arma3-control/scripts/arma3ctl install-server
-```
-
-Der Download ist groß und kann eine Weile dauern. Schließe das Terminal während
-des Downloads nicht.
-
-## 8. Lokale Kane-Mods kopieren
-
-Am einfachsten geht das mit einem SFTP-Programm wie WinSCP. Kopiere die beiden
-entpackten Modordner nach:
+Die beiden lokalen Mods kommen nicht aus dem Steam Workshop. Kopiere die
+entpackten Ordner mit WinSCP nach:
 
 ```text
 /home/arma3/server/mods/
 ```
 
-Danach müssen genau diese Ordner vorhanden sein:
+Danach müssen diese beiden Ordner vorhanden sein:
 
 ```text
 /home/arma3/server/mods/@kane_3cb_alive_civilian
 /home/arma3/server/mods/@kane_3cb_middle_east_civilian_alive
 ```
 
-Korrigiere anschließend Besitzer und Schreibweise:
+Besitzer und Linux-Schreibweise korrigieren:
 
 ```bash
 sudo chown -R arma3:arma3 /home/arma3/server/mods/@kane_3cb_alive_civilian
@@ -154,52 +137,81 @@ sudo -u arma3 python3 /opt/arma3-control/scripts/lowercase_tree.py /home/arma3/s
 sudo -u arma3 python3 /opt/arma3-control/scripts/lowercase_tree.py /home/arma3/server/mods/@kane_3cb_middle_east_civilian_alive
 ```
 
-## 9. Workshop-Mods laden
+## Schritt 6: Missionen kopieren
 
-```bash
-sudo /opt/arma3-control/scripts/arma3ctl update-mods
+Multiplayer-Missionen gehören in diesen Ordner:
+
+```text
+/home/arma3/server/mpmissions
 ```
 
-Auch dieser Download kann lange dauern. Das Script lädt alle aktivierten Mods
-einzeln und versucht einen fehlgeschlagenen Mod standardmäßig viermal. Scheitert
-ein Mod endgültig, arbeitet das Script trotzdem mit dem nächsten Mod weiter.
+Wichtig: Auf Linux wird der Ordner vollständig kleingeschrieben. Der alte
+Ordner `MPMissions` wird bei der Installation automatisch übernommen. Neue
+Missionen gehören trotzdem immer nach `mpmissions`.
 
-Nach dem vollständigen Durchlauf zeigt das Script alle Fehler an. Zusätzlich
-werden sie hier gespeichert:
+Eine Mission sieht zum Beispiel so aus:
 
-```bash
-sudo cat /home/arma3/state/failed-mods.csv
+```text
+meine_mission.Altis.pbo
 ```
 
-Steht dort nur die Kopfzeile, ist kein Mod fehlgeschlagen. Enthält die Datei
-weitere Zeilen, endet `update-mods` nach der Verarbeitung aller übrigen Mods
-mit Exit-Code `1`. Das ist beabsichtigt und macht den Teilfehler für das
-Webpanel und Automatisierungen sichtbar.
-
-## 10. Installation prüfen
+Nach dem Kopieren die Rechte korrigieren:
 
 ```bash
-sudo /opt/arma3-control/scripts/arma3ctl doctor
+sudo chown arma3:arma3 /home/arma3/server/mpmissions/*.pbo
+sudo chmod 0644 /home/arma3/server/mpmissions/*.pbo
 ```
 
-Am Ende sollte möglichst Folgendes stehen:
+Missionen im Menü prüfen:
+
+```bash
+sudo arma3-menu
+```
+
+Wähle Punkt `14`.
+
+## Schritt 7: Installation prüfen
+
+Öffne das Menü:
+
+```bash
+sudo arma3-menu
+```
+
+Führe zuerst diese Punkte aus:
+
+1. Punkt `10` für die Serverdiagnose
+2. Punkt `14` für die Missionsliste
+3. Punkt `16` für die Steam-Verbindung
+4. Punkt `17` für fehlgeschlagene Mods
+
+Weitere wichtige Punkte:
+
+- Punkt `8` aktualisiert die Mods und zeigt am Ende alle erfolgreichen Downloads.
+- Punkt `18` öffnet die Modliste `mods.csv` im Editor.
+- Punkt `19` listet installierte Workshop-Mods nummeriert zum Löschen auf.
+
+Beim Löschen fragt das Menü noch einmal nach. Danach bleibt der Server
+angehalten. Prüfe die Modliste und starte ihn anschließend bewusst neu.
+
+Bei Punkt `10` ist dieses Ergebnis ideal:
 
 ```text
 Ergebnis: 0 Fehler, 0 Warnungen
 ```
 
-Fehlende lokale Mods werden als Warnung angezeigt. Starte den Spielserver erst,
-wenn alle aktivierten Mods vorhanden sind.
+Warnungen wegen fehlender lokaler Mods müssen vor dem Serverstart behoben
+werden.
 
-## 11. Firewall öffnen
+## Schritt 8: Firewall sicher einrichten
 
-Prüfe zuerst, ob du den normalen SSH-Port 22 verwendest:
+Prüfe zuerst den SSH-Port:
 
 ```bash
 sudo ss -ltnp | grep ssh
 ```
 
-Bei Port 22:
+Wenn dort Port `22` steht:
 
 ```bash
 sudo ufw allow OpenSSH
@@ -209,108 +221,107 @@ sudo ufw allow 2302:2306/udp
 sudo ufw enable
 ```
 
-Wenn SSH auf einem anderen Port läuft, öffne diesen Port **vor** dem Aktivieren
-der Firewall. Beispiel für Port 2222:
+Bestätige die Aktivierung mit `y`.
+
+Wenn SSH einen anderen Port verwendet, muss dieser Port vor `ufw enable`
+freigegeben werden. Beispiel für Port 2222:
 
 ```bash
 sudo ufw allow 2222/tcp
 ```
 
-Bestätige die Aktivierung mit `y`.
+Wenn du den falschen SSH-Port freigibst, kannst du dich selbst aussperren.
 
-## 12. Server starten
+## Schritt 9: Server starten
 
 ```bash
-sudo systemctl start arma3-server
-sudo systemctl status arma3-server --no-pager
+sudo arma3-menu
 ```
 
-Steht dort `active (running)`, läuft der Server.
+Wähle Punkt `1`. Prüfe danach mit Punkt `4`, ob der Server als
+`active (running)` angezeigt wird.
 
-## 13. Webpanel öffnen
+Falls der Start fehlschlägt, wähle Punkt `6` und anschließend Punkt `10`.
 
-Öffne auf deinem PC:
+## Schritt 10: Webpanel öffnen
+
+Öffne auf deinem PC im Browser:
 
 ```text
 https://SERVER_IP
 ```
 
-Der Browser warnt vor dem selbstsignierten Zertifikat. Für den ersten Test ist
-das erwartbar. Melde dich mit dem Benutzer `armaadmin` und dem zuvor notierten
-Panel-Kennwort an.
+Ersetze `SERVER_IP` durch die echte IP-Adresse. Der Browser warnt beim ersten
+Aufruf vor dem selbstsignierten Zertifikat. Das ist bei dieser
+Grundinstallation normal.
 
-Für einen dauerhaft öffentlich erreichbaren Server solltest du später eine
-Domain und ein reguläres TLS-Zertifikat einrichten.
+Benutzername:
 
-## Die wichtigsten Befehle
-
-Server starten:
-
-```bash
-sudo /opt/arma3-control/scripts/arma3ctl start
+```text
+armaadmin
 ```
 
-Server stoppen:
+Das Kennwort steht in `/root/arma3-initial-credentials.txt`.
+
+## Spätere Aktualisierung des Control-Projekts
 
 ```bash
-sudo /opt/arma3-control/scripts/arma3ctl stop
+cd ~/arma-server-scripts
+git pull
+sudo ./scripts/bootstrap.sh
 ```
 
-Alles aktualisieren:
+Danach funktioniert das Menü weiterhin mit:
 
 ```bash
-sudo /opt/arma3-control/scripts/arma3ctl update-all
+sudo arma3-menu
 ```
 
-Backup erstellen:
+## Wenn Kane es kaputtgeklickt hat
+
+### Das Menü startet nicht
 
 ```bash
-sudo /opt/arma3-control/scripts/arma3ctl backup
+sudo bash -n /opt/arma3-control/scripts/arma3-menu.sh
+sudo chmod 0755 /opt/arma3-control/scripts/arma3-menu.sh
+sudo ln -sfn /opt/arma3-control/scripts/arma3-menu.sh /usr/local/bin/arma3-menu
+sudo arma3-menu
 ```
 
-Letzte Servermeldungen anzeigen:
+### Der Server startet nicht
+
+Im Menü nacheinander Punkt `10`, Punkt `17` und Punkt `6` ausführen. Die
+vollständige Fehlermeldung kopieren. Der letzte rote Satz allein reicht oft
+nicht aus.
+
+### Missionen werden nicht angezeigt
 
 ```bash
-sudo /opt/arma3-control/scripts/arma3ctl logs 200
+sudo ls -lisa /home/arma3/server/mpmissions
 ```
 
-## Wenn etwas nicht funktioniert
+Die PBO-Dateien müssen im kleingeschriebenen Ordner `mpmissions` liegen und
+`arma3:arma3` gehören.
 
-Status des Spielservers:
+### Workshop-Mods schlagen fehl
 
-```bash
-sudo systemctl status arma3-server --no-pager
-```
+Im Menü Punkt `16` für die Steam-Verbindung prüfen. Danach Punkt `8` erneut
+ausführen und Punkt `17` kontrollieren. Ein fehlgeschlagener Mod beendet nicht
+mehr den gesamten Durchlauf. Die übrigen Mods werden weiterverarbeitet.
 
-Status des Webpanels:
+### Webpanel ist nicht erreichbar
 
 ```bash
 sudo systemctl status arma3-panel --no-pager
-```
-
-Fehler des Spielservers:
-
-```bash
-sudo journalctl -u arma3-server -n 200 --no-pager
-```
-
-Fehler des Webpanels:
-
-```bash
-sudo journalctl -u arma3-panel -n 200 --no-pager
-```
-
-nginx prüfen:
-
-```bash
+sudo systemctl status nginx --no-pager
 sudo nginx -t
 ```
 
-Freien Speicher prüfen:
+### Speicher ist voll
 
 ```bash
 df -h
 ```
 
-Wenn ein Befehl fehlschlägt, kopiere die vollständige Fehlermeldung. Der letzte
-rote Satz allein reicht für die Fehlersuche oft nicht aus.
+Die wichtige Zeile beginnt normalerweise mit `/dev/`. Wenn die Spalte `Use%`
+nahe `100%` liegt, muss Speicher freigegeben oder erweitert werden.

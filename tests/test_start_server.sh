@@ -36,7 +36,10 @@ grep -q -- '-mod=mods/@ace' <<< "$OUTPUT"
 grep -q -- '-config=server.cfg' <<< "$OUTPUT"
 grep -q -- '-cfg=basic.cfg' <<< "$OUTPUT"
 grep -q -- '-noPause' <<< "$OUTPUT"
-! grep -q -- '-profiles=' <<< "$OUTPUT"
+if grep -q -- '-profiles=' <<< "$OUTPUT"; then
+    echo "Ein unerwarteter profiles-Parameter wurde gesetzt." >&2
+    exit 1
+fi
 grep -q 'Aktivierter Mod fehlt: Missing Test' "$TMP/stderr"
 
 echo "test_start_server: OK"

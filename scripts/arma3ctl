@@ -16,17 +16,28 @@ source "$ENV_FILE"
 : "${BACKUP_DIR:=/home/arma3/backups}"
 : "${STATE_DIR:=/home/arma3/state}"
 : "${MODS_FILE:=/etc/arma3/mods.csv}"
+: "${MISSION_DIR:=$SERVER_DIR/mpmissions}"
 : "${SERVER_UNIT:=arma3-server.service}"
 : "${BACKUP_RETENTION_DAYS:=14}"
 : "${FAILED_MODS_FILE:=$STATE_DIR/failed-mods.csv}"
 : "${LOCK_FILE:=/run/lock/arma3-control.lock}"
+: "${DEPOTDOWNLOADER_DIR:=$ARMA_HOME/depotdownloader}"
+: "${DEPOT_WORKSHOP_DIR:=$ARMA_HOME/depot-workshop}"
+: "${DEPOTDOWNLOADER_VERSION:=3.4.0}"
+: "${DEPOTDOWNLOADER_FALLBACK:=1}"
+: "${DEPOTDOWNLOADER_TIMEOUT:=6h}"
+: "${DEPOTDOWNLOADER_VALIDATE:=1}"
 
 declare -a MOD_FAILURE_NAMES=()
 declare -a MOD_FAILURE_IDS=()
 declare -a MOD_FAILURE_TARGETS=()
 declare -a MOD_FAILURE_STAGES=()
 declare -a MOD_FAILURE_REASONS=()
+declare -a MOD_UPDATED_NAMES=()
+declare -a MOD_UPDATED_IDS=()
+declare -A WORKSHOP_SOURCE_OVERRIDES=()
 DOWNLOAD_ERROR=""
+DEPOT_ERROR=""
 MOD_UPDATE_RESULT=0
 
 log() { printf '[%s] %s\n' "$(date '+%F %T')" "$*"; }
@@ -53,10 +64,25 @@ acquire_maintenance_lock() {
 ensure_dirs() {
     require_root
     install -d -o "$ARMA_USER" -g "$ARMA_USER" -m 0750 \
-        "$STEAMCMD_DIR" "$SERVER_DIR" "$SERVER_DIR/mods" "$SERVER_DIR/MPMissions" \
-        "$WORKSHOP_DIR" "$BACKUP_DIR" "$STATE_DIR" \
+        "$STEAMCMD_DIR" "$SERVER_DIR" "$SERVER_DIR/mods" \
+        "$WORKSHOP_DIR" "$DEPOTDOWNLOADER_DIR" "$DEPOT_WORKSHOP_DIR" \
+        "$BACKUP_DIR" "$STATE_DIR" \
+        "$ARMA_HOME/.local" "$ARMA_HOME/.local/share" \
+        "$ARMA_HOME/.local/share/IsolatedStorage" \
         "$ARMA_HOME/.local/share/Arma 3" \
         "$ARMA_HOME/.local/share/Arma 3 - Other Profiles"
+
+    local legacy_mission_dir="$SERVER_DIR/MPMissions"
+    if [[ "$MISSION_DIR" == "$SERVER_DIR/mpmissions" && -d "$legacy_mission_dir" ]]; then
+        if [[ ! -e "$MISSION_DIR" ]]; then
+            log "Übernehme bisherigen Missionsordner: $legacy_mission_dir -> $MISSION_DIR"
+            mv -- "$legacy_mission_dir" "$MISSION_DIR"
+        else
+            log "Übernehme noch fehlende Missionen aus $legacy_mission_dir ..."
+            rsync -a --ignore-existing "$legacy_mission_dir/" "$MISSION_DIR/"
+        fi
+    fi
+    install -d -o "$ARMA_USER" -g "$ARMA_USER" -m 0750 "$MISSION_DIR"
 }
 
 ensure_steamcmd() {
@@ -99,14 +125,135 @@ steam_update_server() {
         +quit
 }
 
-workshop_source() {
+valid_mod_source() {
+    local candidate="$1" first_pbo
+    [[ -d "$candidate" ]] || return 1
+    first_pbo=$(find "$candidate" -type f -iname '*.pbo' -print -quit 2>/dev/null)
+    [[ -n "$first_pbo" ]]
+}
+
+install_depotdownloader() {
+    require_root
+    ensure_dirs
+    [[ "$DEPOTDOWNLOADER_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] \
+        || die "Ungültige DEPOTDOWNLOADER_VERSION: $DEPOTDOWNLOADER_VERSION"
+    [[ "$(uname -m)" == "x86_64" ]] \
+        || die "DepotDownloader wird von diesem Installer nur auf x86-64 eingerichtet."
+
+    local archive stage url
+    archive=$(mktemp)
+    stage=$(mktemp -d)
+    url="https://github.com/SteamRE/DepotDownloader/releases/download/DepotDownloader_${DEPOTDOWNLOADER_VERSION}/DepotDownloader-linux-x64.zip"
+
+    log "Installiere DepotDownloader $DEPOTDOWNLOADER_VERSION ..."
+    if ! curl -fsSL --retry 3 --connect-timeout 15 "$url" -o "$archive"; then
+        rm -f -- "$archive"
+        rm -rf -- "$stage"
+        die "DepotDownloader konnte nicht heruntergeladen werden."
+    fi
+    if ! unzip -q "$archive" -d "$stage"; then
+        rm -f -- "$archive"
+        rm -rf -- "$stage"
+        die "DepotDownloader-Archiv konnte nicht entpackt werden."
+    fi
+    if [[ ! -f "$stage/DepotDownloader" ]]; then
+        rm -f -- "$archive"
+        rm -rf -- "$stage"
+        die "DepotDownloader fehlt im heruntergeladenen Archiv."
+    fi
+
+    rsync -a --delete "$stage/" "$DEPOTDOWNLOADER_DIR/"
+    chown -R "$ARMA_USER:$ARMA_USER" "$DEPOTDOWNLOADER_DIR"
+    chmod 0750 "$DEPOTDOWNLOADER_DIR/DepotDownloader"
+    rm -f -- "$archive"
+    rm -rf -- "$stage"
+    log "DepotDownloader ist einsatzbereit: $DEPOTDOWNLOADER_DIR/DepotDownloader"
+}
+
+steam_workshop_source() {
     local id="$1" candidate
     for candidate in \
         "$WORKSHOP_DIR/steamapps/workshop/content/107410/$id" \
         "$STEAMCMD_DIR/steamapps/workshop/content/107410/$id" \
         "$SERVER_DIR/steamapps/workshop/content/107410/$id"; do
-        [[ -d "$candidate" ]] && { printf '%s\n' "$candidate"; return 0; }
+        valid_mod_source "$candidate" && { printf '%s\n' "$candidate"; return 0; }
     done
+    return 1
+}
+
+workshop_source() {
+    local id="$1" candidate
+    candidate=${WORKSHOP_SOURCE_OVERRIDES[$id]:-}
+    if [[ -n "$candidate" ]] && valid_mod_source "$candidate"; then
+        printf '%s\n' "$candidate"
+        return 0
+    fi
+    candidate="$DEPOT_WORKSHOP_DIR/$id"
+    if valid_mod_source "$candidate"; then
+        printf '%s\n' "$candidate"
+        return 0
+    fi
+    steam_workshop_source "$id"
+}
+
+depotdownloader_available() {
+    [[ "$DEPOTDOWNLOADER_FALLBACK" == "1" ]] \
+        && [[ -n "${STEAM_USER:-}" ]] \
+        && [[ -x "$DEPOTDOWNLOADER_DIR/DepotDownloader" ]]
+}
+
+download_with_depotdownloader() {
+    local name="$1" workshop_id="$2"
+    local target_dir="$DEPOT_WORKSHOP_DIR/$workshop_id"
+    local log_file depot_status first_pbo
+    local -a validate_arg=()
+
+    DEPOT_ERROR=""
+    depotdownloader_available || {
+        DEPOT_ERROR="DepotDownloader ist nicht verfügbar oder deaktiviert"
+        return 1
+    }
+    if [[ "$DEPOTDOWNLOADER_VALIDATE" == "1" ]]; then
+        validate_arg=(-validate)
+    fi
+
+    install -d -o "$ARMA_USER" -g "$ARMA_USER" -m 0750 "$target_dir"
+    log "Lade $name ($workshop_id) mit DepotDownloader ..."
+    log_file=$(mktemp)
+
+    set +e
+    timeout --signal=INT --kill-after=30s "$DEPOTDOWNLOADER_TIMEOUT" \
+        runuser -u "$ARMA_USER" -- env \
+        HOME="$ARMA_HOME" \
+        XDG_DATA_HOME="$ARMA_HOME/.local/share" \
+        DOTNET_CLI_HOME="$ARMA_HOME" \
+        "$DEPOTDOWNLOADER_DIR/DepotDownloader" \
+        -app 107410 \
+        -pubfile "$workshop_id" \
+        -username "$STEAM_USER" \
+        -remember-password \
+        -no-mobile \
+        -dir "$target_dir" \
+        "${validate_arg[@]}" 2>&1 | tee "$log_file"
+    depot_status=${PIPESTATUS[0]}
+    set -e
+
+    first_pbo=$(find "$target_dir" -type f -iname '*.pbo' -print -quit 2>/dev/null)
+    rm -f "$log_file"
+
+    if (( depot_status == 0 )) && [[ -n "$first_pbo" ]]; then
+        WORKSHOP_SOURCE_OVERRIDES["$workshop_id"]="$target_dir"
+        log "DepotDownloader erfolgreich: $name ($workshop_id)"
+        return 0
+    fi
+
+    if (( depot_status == 124 || depot_status == 137 )); then
+        DEPOT_ERROR="DepotDownloader-Zeitüberschreitung nach $DEPOTDOWNLOADER_TIMEOUT"
+    elif (( depot_status != 0 )); then
+        DEPOT_ERROR="DepotDownloader endete mit Exit-Code $depot_status"
+    else
+        DEPOT_ERROR="DepotDownloader lieferte keine PBO-Dateien"
+    fi
     return 1
 }
 
@@ -177,10 +324,27 @@ reset_mod_failures() {
     MOD_FAILURE_TARGETS=()
     MOD_FAILURE_STAGES=()
     MOD_FAILURE_REASONS=()
+    MOD_UPDATED_NAMES=()
+    MOD_UPDATED_IDS=()
+    WORKSHOP_SOURCE_OVERRIDES=()
 
     printf '%s\n' 'timestamp,name,workshop_id,target,stage,reason' > "$FAILED_MODS_FILE"
     chown "$ARMA_USER:$ARMA_USER" "$FAILED_MODS_FILE"
     chmod 0640 "$FAILED_MODS_FILE"
+}
+
+print_mod_update_summary() {
+    local count=${#MOD_UPDATED_NAMES[@]}
+    local index
+
+    printf '\n=== Erfolgreich heruntergeladene Mods (%d) ===\n' "$count"
+    for ((index=0; index<count; index++)); do
+        printf '  %2d) %s (%s)\n' \
+            "$((index + 1))" \
+            "${MOD_UPDATED_NAMES[$index]}" \
+            "${MOD_UPDATED_IDS[$index]}"
+    done
+    (( count > 0 )) || printf '  Keine Mods erfolgreich heruntergeladen.\n'
 }
 
 record_mod_failure() {
@@ -230,7 +394,8 @@ download_workshop_item() {
     local retries="${WORKSHOP_RETRIES:-4}"
     local retry_delay="${WORKSHOP_RETRY_DELAY:-30}"
     local item_timeout="${WORKSHOP_ITEM_TIMEOUT:-3h}"
-    local attempt log_file steam_status last_reason
+    local attempt log_file steam_status last_reason depot_reason="" source_dir
+    local depot_attempted=0
     local -a validate_arg=()
 
     [[ "$retries" =~ ^[1-9][0-9]*$ ]] \
@@ -243,6 +408,19 @@ download_workshop_item() {
 
     DOWNLOAD_ERROR=""
     last_reason="Unbekannter SteamCMD-Fehler"
+
+    # Mods, die bereits einmal über DepotDownloader geladen wurden, werden bei
+    # späteren Updates direkt damit geprüft. So entstehen nicht bei jedem Lauf
+    # erneut vier bekannte SteamCMD-Fehler.
+    if depotdownloader_available \
+        && valid_mod_source "$DEPOT_WORKSHOP_DIR/$workshop_id"; then
+        depot_attempted=1
+        if download_with_depotdownloader "$name" "$workshop_id"; then
+            return 0
+        fi
+        depot_reason="$DEPOT_ERROR"
+        log "DepotDownloader fehlgeschlagen: $depot_reason. Versuche SteamCMD ..."
+    fi
 
     for ((attempt=1; attempt<=retries; attempt++)); do
         log "Lade $name ($workshop_id), Versuch $attempt/$retries ..."
@@ -259,11 +437,13 @@ download_workshop_item() {
         set -e
 
         if (( steam_status == 0 )) \
-            && grep -Fq "Success. Downloaded item $workshop_id" "$log_file" \
-            && workshop_source "$workshop_id" >/dev/null; then
-            rm -f "$log_file"
-            log "Download erfolgreich: $name ($workshop_id)"
-            return 0
+            && grep -Fq "Success. Downloaded item $workshop_id" "$log_file"; then
+            if source_dir=$(steam_workshop_source "$workshop_id"); then
+                WORKSHOP_SOURCE_OVERRIDES["$workshop_id"]="$source_dir"
+                rm -f "$log_file"
+                log "Download erfolgreich: $name ($workshop_id)"
+                return 0
+            fi
         fi
 
         if (( steam_status == 124 || steam_status == 137 )); then
@@ -283,7 +463,22 @@ download_workshop_item() {
         fi
     done
 
+    # Wenn SteamCMD den Workshop-Mod nicht laden kann, wird automatisch der
+    # bereits eingerichtete DepotDownloader als zweiter Downloadweg verwendet.
+    if (( depot_attempted == 0 )) && depotdownloader_available; then
+        depot_attempted=1
+        if download_with_depotdownloader "$name" "$workshop_id"; then
+            return 0
+        fi
+        depot_reason="$DEPOT_ERROR"
+    fi
+
     DOWNLOAD_ERROR="$last_reason nach $retries Versuchen"
+    if [[ -n "$depot_reason" ]]; then
+        DOWNLOAD_ERROR+="; $depot_reason"
+    elif (( depot_attempted == 0 )); then
+        DOWNLOAD_ERROR+="; DepotDownloader-Fallback nicht verfügbar"
+    fi
     log "FEHLER: $name ($workshop_id) konnte nicht geladen werden. Der nächste Mod wird versucht."
     return 1
 }
@@ -353,6 +548,9 @@ update_mods_core() {
             failed_download_ids["$workshop_id"]=1
             record_mod_failure "$name" "$workshop_id" "$target" "download" "$DOWNLOAD_ERROR"
             result=1
+        else
+            MOD_UPDATED_NAMES+=("$name")
+            MOD_UPDATED_IDS+=("$workshop_id")
         fi
     done < "$MODS_FILE"
 
@@ -370,9 +568,61 @@ update_mods_core() {
     done < "$MODS_FILE"
 
     sync_keys
+    print_mod_update_summary
     print_mod_failure_summary
 
     MOD_UPDATE_RESULT=$result
+}
+
+remove_workshop_mod() {
+    require_root
+    ensure_dirs
+    local requested_target="$1"
+    local name="" type="" workshop_id="" target="" enabled=""
+    local found=0 server_mod_dir temporary
+
+    [[ "$requested_target" =~ ^@[a-z0-9_+.-]+$ ]] \
+        || die "Ungültiger Modordner: $requested_target"
+
+    while IFS=, read -r name type workshop_id target enabled; do
+        enabled=${enabled%$'\r'}
+        [[ "$name" == "name" ]] && continue
+        if [[ "$type" == "workshop" && "$target" == "$requested_target" ]]; then
+            found=1
+            break
+        fi
+    done < "$MODS_FILE"
+    (( found == 1 )) || die "Workshop-Mod steht nicht in $MODS_FILE: $requested_target"
+    [[ "$workshop_id" =~ ^[0-9]+$ ]] || die "Ungültige Workshop-ID für $name"
+
+    server_mod_dir="$SERVER_DIR/mods/$target"
+    case "$server_mod_dir" in
+        "$SERVER_DIR"/mods/@*) ;;
+        *) die "Unsicherer Modpfad wurde abgelehnt: $server_mod_dir" ;;
+    esac
+
+    stop_for_maintenance
+    rm -rf -- \
+        "${server_mod_dir:?}" \
+        "${WORKSHOP_DIR:?}/steamapps/workshop/content/107410/$workshop_id" \
+        "${STEAMCMD_DIR:?}/steamapps/workshop/content/107410/$workshop_id" \
+        "${SERVER_DIR:?}/steamapps/workshop/content/107410/$workshop_id" \
+        "${DEPOT_WORKSHOP_DIR:?}/$workshop_id"
+
+    temporary=$(mktemp)
+    awk -F, -v OFS=, -v requested_target="$requested_target" '
+        $1 == "name" { print; next }
+        $2 == "workshop" && $4 == requested_target { $5 = 0 }
+        { print }
+    ' "$MODS_FILE" > "$temporary"
+    install -o root -g arma3ops -m 0640 "$temporary" "$MODS_FILE"
+    rm -f -- "$temporary"
+
+    sync_keys
+    log "Workshop-Mod gelöscht und in mods.csv deaktiviert: $name ($target)"
+    if (( service_was_active )); then
+        log "Der Server bleibt angehalten. Prüfe die Modliste und starte ihn danach bewusst neu."
+    fi
 }
 
 update_mods() {
@@ -422,7 +672,7 @@ backup_server() {
     for item in server.cfg basic.cfg ban.txt bans.txt; do
         [[ -e "$SERVER_DIR/$item" ]] && cp -a "$SERVER_DIR/$item" "$stage/server/"
     done
-    [[ -d "$SERVER_DIR/MPMissions" ]] && rsync -a "$SERVER_DIR/MPMissions/" "$stage/server/MPMissions/"
+    [[ -d "$MISSION_DIR" ]] && rsync -a "$MISSION_DIR/" "$stage/server/mpmissions/"
     [[ -d "$ARMA_HOME/.local/share/Arma 3 - Other Profiles" ]] && \
         rsync -a "$ARMA_HOME/.local/share/Arma 3 - Other Profiles/" "$stage/profile/"
 
@@ -477,12 +727,16 @@ usage() {
 Verwendung: arma3ctl <Befehl>
 
   steam-login      SteamCMD interaktiv anmelden und Steam Guard bestätigen
+  install-depotdownloader
+                   DepotDownloader als Ausweichlösung installieren
   install-server   Dedicated Server installieren oder validieren
   update-server    Server stoppen, aktualisieren und wieder starten
   update-mods      Workshop-Mods aktualisieren, Fehler protokollieren und fortfahren
   update-all       Server und Mods aktualisieren
   sync-keys        Keys der aktivierten Mods synchronisieren
   backup           Konfiguration, Missionen, Profile und lokale Mods sichern
+  remove-mod TARGET
+                   Workshop-Mod löschen und in mods.csv deaktivieren
   start|stop|restart|status
   logs [ZEILEN]
   doctor           Installation und Modstruktur prüfen
@@ -491,7 +745,7 @@ USAGE
 
 command="${1:-}"
 case "$command" in
-    steam-login|install-server|update-server|update-mods|update-all|sync-keys|backup|start|stop|restart)
+    steam-login|install-depotdownloader|install-server|update-server|update-mods|update-all|sync-keys|backup|remove-mod|start|stop|restart)
         acquire_maintenance_lock
         ;;
 esac
@@ -499,14 +753,19 @@ case "$command" in
     steam-login)
         require_root; ensure_steamcmd
         [[ -n "${STEAM_USER:-}" ]] || die "STEAM_USER zuerst in $ENV_FILE setzen."
-        as_arma3 "$STEAMCMD_DIR/steamcmd.sh" +login "$STEAM_USER"
+        as_arma3 "$STEAMCMD_DIR/steamcmd.sh" +login "$STEAM_USER" +quit
         ;;
+    install-depotdownloader) install_depotdownloader ;;
     install-server) require_root; steam_update_server ;;
     update-server) update_server ;;
     update-mods) update_mods ;;
     update-all) update_all ;;
     sync-keys) sync_keys ;;
     backup) backup_server ;;
+    remove-mod)
+        [[ -n "${2:-}" ]] || die "Verwendung: arma3ctl remove-mod @modordner"
+        remove_workshop_mod "$2"
+        ;;
     start|stop|restart) require_root; systemctl "$command" "$SERVER_UNIT" ;;
     status) systemctl status "$SERVER_UNIT" --no-pager || true ;;
     logs) journalctl -u "$SERVER_UNIT" -n "${2:-200}" --no-pager -o short-iso ;;

@@ -17,7 +17,7 @@ log "Installiere Systempakete ..."
 export DEBIAN_FRONTEND=noninteractive
 apt-get update
 apt-get install -y --no-install-recommends \
-    ca-certificates curl tar rsync sudo openssl apache2-utils nginx ufw \
+    ca-certificates curl git tar unzip rsync sudo nano less openssl apache2-utils nginx ufw \
     python3 python3-venv python3-pip util-linux lib32gcc-s1 lib32stdc++6
 
 getent group "$OPS_GROUP" >/dev/null || groupadd --system "$OPS_GROUP"
@@ -33,6 +33,7 @@ usermod -aG "$OPS_GROUP",arma3,systemd-journal "$PANEL_USER"
 log "Installiere Control-Panel unter $TARGET_ROOT ..."
 install -d -o root -g root -m 0755 "$TARGET_ROOT"
 rsync -a --delete \
+    --exclude '.git' \
     --exclude '.venv' \
     --exclude '__pycache__' \
     "$SOURCE_ROOT/" "$TARGET_ROOT/"
@@ -43,15 +44,30 @@ install -d -o root -g "$OPS_GROUP" -m 0750 /etc/arma3
 if [[ ! -f /etc/arma3/arma3.env ]]; then
     install -o root -g "$OPS_GROUP" -m 0640 "$TARGET_ROOT/config/arma3.env.example" /etc/arma3/arma3.env
 fi
-install -o root -g "$OPS_GROUP" -m 0640 "$TARGET_ROOT/config/mods.csv" /etc/arma3/mods.csv
+install -o root -g "$OPS_GROUP" -m 0640 "$TARGET_ROOT/config/mods.csv" /etc/arma3/mods.csv.example
+if [[ ! -f /etc/arma3/mods.csv ]]; then
+    install -o root -g "$OPS_GROUP" -m 0640 "$TARGET_ROOT/config/mods.csv" /etc/arma3/mods.csv
+fi
 
 install -d -o "$ARMA_USER" -g "$ARMA_USER" -m 0750 \
     /home/arma3/steamcmd /home/arma3/server /home/arma3/server/mods \
-    /home/arma3/server/MPMissions /home/arma3/workshop /home/arma3/backups \
-    /home/arma3/state "/home/arma3/.local/share/Arma 3" \
+    /home/arma3/workshop /home/arma3/depotdownloader /home/arma3/depot-workshop \
+    /home/arma3/backups /home/arma3/state "/home/arma3/.local/share/Arma 3" \
     "/home/arma3/.local/share/Arma 3 - Other Profiles"
 
-panel_password=$(openssl rand -hex 12)
+legacy_mission_dir=/home/arma3/server/MPMissions
+mission_dir=/home/arma3/server/mpmissions
+if [[ -d "$legacy_mission_dir" && ! -e "$mission_dir" ]]; then
+    log "Übernehme vorhandene Missionen nach $mission_dir ..."
+    mv -- "$legacy_mission_dir" "$mission_dir"
+fi
+install -d -o "$ARMA_USER" -g "$ARMA_USER" -m 0750 "$mission_dir"
+if [[ -d "$legacy_mission_dir" ]]; then
+    log "Kopiere noch fehlende Missionen aus $legacy_mission_dir ..."
+    rsync -a --ignore-existing "$legacy_mission_dir/" "$mission_dir/"
+fi
+
+panel_password="Bestehendes Panel-Kennwort bleibt gültig"
 server_admin_password=""
 if [[ ! -f /home/arma3/server/server.cfg ]]; then
     server_admin_password=$(openssl rand -hex 18)
@@ -80,7 +96,10 @@ install -o root -g root -m 0644 "$TARGET_ROOT/systemd/arma3-panel.service" /etc/
 install -o root -g root -m 0440 "$TARGET_ROOT/sudoers/arma3-panel" /etc/sudoers.d/arma3-panel
 visudo -cf /etc/sudoers.d/arma3-panel
 
-htpasswd -bc /etc/nginx/.htpasswd armaadmin "$panel_password" >/dev/null
+if [[ ! -f /etc/nginx/.htpasswd ]]; then
+    panel_password=$(openssl rand -hex 12)
+    htpasswd -bc /etc/nginx/.htpasswd armaadmin "$panel_password" >/dev/null
+fi
 install -d -o root -g root -m 0700 /etc/nginx/ssl
 if [[ ! -f /etc/nginx/ssl/arma3-panel.key || ! -f /etc/nginx/ssl/arma3-panel.crt ]]; then
     openssl req -x509 -newkey rsa:3072 -nodes -days 825 \
@@ -98,7 +117,7 @@ ln -sfn /etc/nginx/sites-available/arma3-panel.conf /etc/nginx/sites-enabled/arm
 nginx -t
 
 cat > "$CREDENTIAL_FILE" <<CREDS
-TF133 Arma 3 Control – initiale Zugangsdaten
+TF133 Arma 3 Control: initiale Zugangsdaten
 
 Panel-Benutzer: armaadmin
 Panel-Kennwort: $panel_password
@@ -115,10 +134,11 @@ systemctl enable arma3-panel.service nginx
 systemctl restart arma3-panel.service
 systemctl restart nginx
 systemctl enable arma3-server.service
+ln -sfn "$TARGET_ROOT/scripts/arma3-menu.sh" /usr/local/bin/arma3-menu
 
 cat <<RESULT
 
-Installation des Panels abgeschlossen.
+Grundinstallation abgeschlossen.
 
 Initiale Zugangsdaten:
   $CREDENTIAL_FILE
@@ -131,6 +151,9 @@ Nächste Schritte:
   5. sudo /opt/arma3-control/scripts/arma3ctl update-mods
   6. sudo /opt/arma3-control/scripts/arma3ctl doctor
   7. sudo systemctl start arma3-server
+
+Interaktives Servermenü:
+  sudo arma3-menu
 
 Firewall erst nach Prüfung des SSH-Ports aktivieren:
   ufw allow OpenSSH

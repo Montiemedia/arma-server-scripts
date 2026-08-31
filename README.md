@@ -1,125 +1,108 @@
 # TF133 Arma 3 Control
 
-Schlankes Web-Panel und Serverscript für einen modifizierten Arma-3-Dedicated-Server unter Ubuntu 24.04 (x86-64). Das Projekt ist auf einen einzelnen Linux-Host mit systemd, maximal 20 Spieler und den vorhandenen TF133-ALiVE-Modsatz ausgelegt. Windows wird weder als Serverplattform unterstützt noch in der Installation berücksichtigt.
+Serversteuerung, Webpanel und Einsteiger-Installer für einen modifizierten
+Arma-3-Dedicated-Server auf Ubuntu 24.04 x86-64.
 
-Noch nie einen Linux-Server eingerichtet? Dann beginne mit der
-[Installationsanleitung für Einsteiger](INSTALLATION-EINFACH.md).
+Noch nie einen Linux-Server eingerichtet? Öffne die
+[Schritt-für-Schritt-Anleitung](INSTALLATION-EINFACH.md).
+
+## Schnellinstallation
+
+Auf einem frischen Ubuntu-24.04-Server:
+
+```bash
+sudo apt update
+sudo apt install -y git
+git clone --branch fix/resilient-mod-updates --single-branch https://github.com/Montiemedia/arma-server-scripts.git
+cd arma-server-scripts
+sudo ./install.sh
+```
+
+Der Installer richtet Systembenutzer, Serverstruktur, Webpanel, Menü,
+SteamCMD, DepotDownloader und den Arma 3 Dedicated Server ein. Workshop-Mods
+können direkt im Installer geladen werden. Lokale Kane-Mods müssen anschließend
+manuell kopiert werden.
+
+Das Administrationsmenü startet danach mit:
+
+```bash
+sudo arma3-menu
+```
 
 ## Enthalten
 
-- FastAPI-Webpanel ohne Node.js-Buildkette
-- Start, Stopp und Neustart über systemd
-- Aktualisierung des Dedicated Servers über SteamCMD App-ID `233780`
-- Einzelaktualisierung der Workshop-Mods mit Wiederholungsversuchen und Fehlerprotokoll
-- Einträge für die beiden lokalen Kane-Mods
-- automatische Kleinschreibung aller Moddateien für Linux
+- interaktives Bash-Menü mit Serverstart, Stopp, Status, Logs und Diagnose
+- FastAPI-Webpanel hinter Nginx und HTTPS
+- Arma 3 Dedicated Server über SteamCMD App-ID `233780`
+- einzelne Workshop-Downloads mit Wiederholungsversuchen
+- DepotDownloader als Ausweichlösung für problematische Workshop-Downloads
+- Abschlussliste der erfolgreich heruntergeladenen Workshop-Mods
+- nummeriertes, bestätigungspflichtiges Löschen installierter Workshop-Mods
+- dauerhafte Fehlerliste unter `/home/arma3/state/failed-mods.csv`
+- automatische Kleinschreibung der Moddateien für Linux
 - Synchronisierung der `.bikey`-Dateien
 - Backups von Konfiguration, Missionen, Profilen und lokalen Mods
-- Diagnosefunktion für Dateien, Mods, Schreibweise, Speicher und Ports
-- Nginx-Reverse-Proxy mit Basic Auth und restriktiven Browser-Headern
-- eng begrenzte sudo-Regeln für das Panel
-- Same-Origin-Prüfung für schreibende Webaktionen
-- systemweiter Wartungs-Lock gegen parallele Updates und Serveraktionen
+- gemeinsamer Wartungs-Lock für Menü, Webpanel und Automatisierungen
+- automatisierte Bash-, Python- und Konfigurationstests
 
-## Zielstruktur
+## Wichtige Pfade
 
 ```text
-/opt/arma3-control/                  Panel und root-eigene Steuerscripte
-/etc/arma3/arma3.env                 zentrale Pfade und Startparameter
-/etc/arma3/mods.csv                  Modliste
+/opt/arma3-control/                  installierte Control-Dateien
+/usr/local/bin/arma3-menu            kurzer Startbefehl für das Menü
+/etc/arma3/arma3.env                 zentrale Einstellungen
+/etc/arma3/mods.csv                  aktive Modliste
 /home/arma3/server/                  Arma-3-Server
-/home/arma3/server/mods/             normalisierte Modordner
-/home/arma3/server/MPMissions/       Missionen
+/home/arma3/server/mods/             Modordner
+/home/arma3/server/mpmissions/       Multiplayer-Missionen
 /home/arma3/steamcmd/                SteamCMD
-/home/arma3/workshop/                Workshop-Downloadbereich
+/home/arma3/depotdownloader/         DepotDownloader
+/home/arma3/workshop/                SteamCMD-Workshopdaten
+/home/arma3/depot-workshop/          DepotDownloader-Workshopdaten
 /home/arma3/backups/                 Sicherungen
-/var/lib/arma3-panel/jobs/           Auftragsstatus und Ausgaben
+/home/arma3/state/failed-mods.csv    letzte Modfehler
+/var/lib/arma3-panel/jobs/           Ausgaben der Panelaufträge
 ```
 
-## Installation auf Ubuntu 24.04
+Der Missionsordner heißt unter Linux bewusst `mpmissions`. Beim erneuten
+Bootstrap wird ein vorhandener Ordner `MPMissions` übernommen, damit ältere
+Installationen ihre Missionen nicht verlieren.
 
-Repository auf den Server kopieren und dann ausführen:
-
-```bash
-cd arma3-control
-sudo ./scripts/bootstrap.sh
-```
-
-Die initialen Zugangsdaten werden root-exklusiv abgelegt:
-
-```bash
-sudo cat /root/arma3-initial-credentials.txt
-```
-
-Danach den Steam-Benutzer in `/etc/arma3/arma3.env` eintragen. Für Workshop-Downloads ist ein getrenntes Steam-Konto sinnvoll. Das Kennwort wird bewusst nicht in der Konfigurationsdatei gespeichert.
-
-```bash
-sudo nano /etc/arma3/arma3.env
-sudo /opt/arma3-control/scripts/arma3ctl steam-login
-sudo /opt/arma3-control/scripts/arma3ctl install-server
-```
-
-Beim interaktiven Steam-Login kann Steam Guard bestätigt werden. Danach verwendet SteamCMD seine lokal gecachten Anmeldedaten.
-
-## Lokale Kane-Mods
-
-Die beiden lokalen Mods werden nicht über Steam heruntergeladen. Die entpackten Ordner müssen so vorliegen:
+## Menüfunktionen
 
 ```text
-/home/arma3/server/mods/@kane_3cb_alive_civilian
-/home/arma3/server/mods/@kane_3cb_middle_east_civilian_alive
+ 1  Server starten
+ 2  Server stoppen
+ 3  Server neu starten
+ 4  Serverstatus anzeigen
+ 5  Server-Journal live anzeigen, einschließlich 300 vorheriger Zeilen
+ 6  frei wählbare Anzahl letzter Journalzeilen anzeigen
+ 7  UDP-Ports prüfen
+ 8  Workshop-Mods aktualisieren und Abschlussliste anzeigen
+ 9  Mod-Keys synchronisieren
+10  Serverdiagnose ausführen
+11  server.cfg öffnen
+12  basic.cfg öffnen
+13  start-server.sh anzeigen
+14  Missionen aus mpmissions auflisten
+15  UFW-Status anzeigen
+16  Steam-Verbindung prüfen
+17  failed-mods.csv anzeigen
+18  mods.csv öffnen
+19  installierten Workshop-Mod nummeriert löschen
+ 0  Menü beenden
 ```
 
-Danach:
+Punkt 19 zeigt nur Workshop-Mods aus der kontrollierten `mods.csv`. Nach der
+Bestätigung werden Serverkopie und Downloadkopien gelöscht. Der Eintrag wird
+auf `enabled=0` gesetzt, damit der Mod nicht beim nächsten Update sofort wieder
+heruntergeladen wird. Der Server bleibt danach bewusst angehalten.
 
-```bash
-sudo chown -R arma3:arma3 /home/arma3/server/mods/@kane_*
-sudo -u arma3 python3 /opt/arma3-control/scripts/lowercase_tree.py \
-  /home/arma3/server/mods/@kane_3cb_alive_civilian
-sudo -u arma3 python3 /opt/arma3-control/scripts/lowercase_tree.py \
-  /home/arma3/server/mods/@kane_3cb_middle_east_civilian_alive
-```
+Schreibende Aktionen verwenden `scripts/arma3ctl`. Dadurch bleibt die Sperre
+`/run/lock/arma3-control.lock` wirksam und parallele Wartungsaktionen werden
+verhindert.
 
-## Mods installieren und Server starten
-
-```bash
-sudo /opt/arma3-control/scripts/arma3ctl update-mods
-sudo cat /home/arma3/state/failed-mods.csv
-sudo /opt/arma3-control/scripts/arma3ctl doctor
-sudo systemctl start arma3-server
-```
-
-Jeder Workshop-Mod wird einzeln versucht. Ein fehlgeschlagener Download beendet
-den Durchlauf nicht; erfolgreiche Mods werden weiterhin synchronisiert. Fehler
-stehen am Ende der Ausgabe und dauerhaft in
-`/home/arma3/state/failed-mods.csv`. Wenn mindestens ein Mod fehlschlägt,
-endet der vollständige Lauf mit Exit-Code `1`.
-
-Das Panel ist anschließend über `https://<IPv4-Adresse>` erreichbar. Das Bootstrap-Script erzeugt zunächst ein selbstsigniertes Zertifikat, weshalb der Browser beim ersten Aufruf warnt. Vor einer dauerhaften öffentlichen Nutzung sollte eine Domain mit einem regulären TLS-Zertifikat eingerichtet werden.
-
-## Firewall
-
-Arma 3 benötigt für die erste Instanz standardmäßig UDP `2302` bis `2306`. Der Server braucht eine echte öffentliche IPv4-Adresse. Die Firewall nicht blind aktivieren, wenn SSH auf einem abweichenden Port läuft.
-
-```bash
-sudo ufw allow OpenSSH
-sudo ufw allow 80/tcp
-sudo ufw allow 443/tcp
-sudo ufw allow 2302:2306/udp
-sudo ufw enable
-```
-
-## TLS mit eigener Domain
-
-Nach Eintrag eines DNS-A/AAAA-Records die Nginx-Datei anpassen:
-
-```bash
-sudo nano /etc/nginx/sites-available/arma3-panel.conf
-```
-
-`server_name _;` durch die Domain ersetzen. Danach kann beispielsweise Certbot verwendet werden. Das selbstsignierte Zertifikat kann anschließend durch ein reguläres Zertifikat ersetzt werden. HTTP wird bereits automatisch auf HTTPS umgeleitet.
-
-## Bedienung ohne Webpanel
+## Direkte Befehle
 
 ```bash
 sudo /opt/arma3-control/scripts/arma3ctl start
@@ -132,34 +115,51 @@ sudo /opt/arma3-control/scripts/arma3ctl backup
 sudo /opt/arma3-control/scripts/arma3ctl sync-keys
 sudo /opt/arma3-control/scripts/arma3ctl doctor
 sudo /opt/arma3-control/scripts/arma3ctl logs 300
+sudo /opt/arma3-control/scripts/arma3ctl remove-mod @modordner
 ```
 
-## Wichtige Grenzen dieses ersten Stands
+## Bestehende Installation aktualisieren
 
-- Keine RCON-Konsole und keine Ingame-Adminbefehle im Browser
-- Noch keine Anzeige verbundener Spieler
-- Keine Bearbeitung von `server.cfg` oder Missionen im Browser
-- Keine automatische TLS-Einrichtung
-- Keine automatische Installation der beiden lokalen Mods
+Im geklonten Projektordner:
 
-Diese Funktionen sind bewusst nicht halbgar eingebaut. Der erste Stand konzentriert sich auf kontrollierbare Serveraktionen, Updates, Backups und nachvollziehbare Logs.
+```bash
+git pull
+sudo ./scripts/bootstrap.sh
+```
+
+Eigene `/etc/arma3/arma3.env`, `/etc/arma3/mods.csv`, `server.cfg`,
+`basic.cfg` und vorhandene Zugangsdaten werden dabei nicht überschrieben.
+
+## Modfehler
+
+Jeder Workshop-Mod wird einzeln verarbeitet. Nach einem endgültigen Fehler
+läuft die Aktualisierung mit dem nächsten Mod weiter. Am Ende liefert der
+Gesamtlauf Exit-Code `1`, damit Webpanel und Automatisierungen den Teilfehler
+erkennen.
+
+Details stehen in:
+
+```bash
+sudo cat /home/arma3/state/failed-mods.csv
+```
 
 ## Betriebssicherheit
 
-Schreibende Browseranfragen werden anhand von `Origin`, `Referer` und
-`Sec-Fetch-Site` auf denselben Ursprung begrenzt. Direkte CLI-Anfragen ohne
-Browser-Header bleiben möglich und müssen weiterhin die Nginx Basic Auth
-passieren.
+- Serveraktionen und Updates verwenden einen systemweiten `flock`-Lock.
+- `update-all` hält den Server während Server- und Modupdate durchgehend an.
+- Schreibende Browseranfragen werden auf denselben Ursprung begrenzt.
+- Das Panel erhält nur eng begrenzte Befehle über `sudoers`.
+- Die Firewall wird nicht automatisch aktiviert, damit ein abweichender
+  SSH-Port den Administrator nicht aussperrt.
+- Das erste TLS-Zertifikat ist selbstsigniert. Für den Dauerbetrieb sollte eine
+  Domain mit regulärem Zertifikat eingerichtet werden.
 
-Alle verändernden `arma3ctl`-Befehle verwenden zusätzlich
-`/run/lock/arma3-control.lock`. Dadurch können Webpanel, Administratoren und
-Automatisierungen keine konkurrierenden Updates oder Serveraktionen starten.
-`update-all` hält den Server während Server- und Modaktualisierung durchgehend
-gestoppt und startet ihn erst danach wieder.
+## Projekt prüfen
 
-## Offizielle technische Referenzen
+Auf Ubuntu 24.04:
 
-- Bohemia Interactive Community Wiki: Arma 3 Dedicated Server
-- Bohemia Interactive Community Wiki: Arma 3 Startup Parameters
-- Bohemia Interactive Community Wiki: Arma 3 Server Configuration
-- Valve Developer Community: SteamCMD
+```bash
+make test
+```
+
+Die GitHub-Actions-Pipeline führt zusätzlich ShellCheck aus.

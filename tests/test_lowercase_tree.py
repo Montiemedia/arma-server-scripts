@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import subprocess
+import sys
 import tempfile
 from pathlib import Path
 
@@ -11,7 +12,7 @@ with tempfile.TemporaryDirectory() as temp:
     base = Path(temp) / "MyMod"
     (base / "AddOns").mkdir(parents=True)
     (base / "AddOns" / "TEST.PBO").write_text("x", encoding="utf-8")
-    result = subprocess.run(["python3", str(SCRIPT), str(base)], capture_output=True, text=True)
+    result = subprocess.run([sys.executable, str(SCRIPT), str(base)], capture_output=True, text=True)
     assert result.returncode == 0, result.stderr
     assert (base / "addons" / "test.pbo").is_file()
 
