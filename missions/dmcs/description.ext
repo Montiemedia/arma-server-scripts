@@ -1,3 +1,5 @@
+// Reiner COOP-/PvE-Missionskern: menschliche Spieler nur auf BLUFOR.
+// In 3DEN ausschliesslich BLUFOR-Slots als Playable konfigurieren.
 author = "DMCS Prototype";
 onLoadName = "Dynamic Mission Control System";
 respawn = 3;
