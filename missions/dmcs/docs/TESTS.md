@@ -63,3 +63,22 @@ Der lokale Checker prueft Dateinamen, CfgFunctions-Registrierung, Klammerstruktu
 Erst nach bestandenem Vanilla-Multiplayer-Test und Mod-/Karten-Test darf die Version als lauffaehig und multiplayer-tauglich bezeichnet werden. Als Nachweis: benutzte Build-/Modversionen, RPT-Auszuege, mindestens zwei Clients, Listen- und Dedicated-Server, bekannte Restfehler.
 
 Offen fuer spaetere Version: echte ACE-Behandlung, Transport mit Fahrzeug, ziviler Verkehr, persistente Zivilpopulation, dynamisch automatisch ausgeloeste Vorfaelle, gemischte Coop-Seiten.
+
+## 6. Szenariobibliothek 0.4
+
+* [ ] `python3 missions/dmcs/tools/build_scenario_catalog.py --check` meldet keine Abweichungen zur JSON-Quelle.
+* [ ] Der Spielleiter kann das Fenster `Szenariobibliothek (800)` im Host-Dialog oeffnen.
+* [ ] WEST, EAST, GUER und CIV zeigen ohne Filter je exakt 200 Vorlagen.
+* [ ] Kategorien, Dauerlimit (30/60/90/120 Minuten) und Spielergroessen-Filter funktionieren, ohne den Server zu belasten.
+* [ ] Seitenfremdes Szenario: Client darf eine Geschichte ansehen, aber Server lehnt Entwurfsanlage ab.
+* [ ] `W-001` als WEST-Spieler mit gueltiger Zone `dyn_zone_1` erzeugt einen neuen DRAFT-Auftrag.
+* [ ] Die Liste zeigt die Verknuepfung zur Szenario-ID; Aktivierung verwendet Titel, Story und konkretes Ziel aus `missionConfigFile`.
+* [ ] `scenario`-RPC mit `W-999`, manipuliertem Text oder unbekannter Zone wird verweigert.
+* [ ] Fehlender Szenario-Export (`dyn/scenarios/*.hpp`): Mission soll nicht als funktional freigegeben werden.
+* [ ] Kopie eines Bibliotheksentwurfs kann Zone aendern, aber nicht unbemerkt die Basismethode tauschen.
+* [ ] Nach dem Aktivieren pruefen, dass die generische Basismethode korrekt laeuft (z. B. `recon` durch Aufenthalt am Marker).
+* [ ] Listenserver, Dedicated Server und JIP; Task-Metadaten und Briefing auch fuer Spaeteinsteiger.
+* [ ] Mehrere Bibliotheksauftraege, maxTasks/maxActive, Pause/Fortsetzen, Abbruch, KI-Cleanup.
+* [ ] Das groessere Config-Volumen auf dem tatsaechlichen TF133-Modpreset messen; Performance nicht aus Dateigroesse ableiten.
+
+**Grenze:** Ein Szenario-Briefing ersetzt keine spezifische Szene. Brand, Verkehrsunfall, Gespraeche, Personenschutz oder echte Lieferungen brauchen separate Missionsmodule.
