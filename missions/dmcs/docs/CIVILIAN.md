@@ -4,13 +4,13 @@ DMCS bleibt **COOP-only**, darf aber auch zivilen Spielern Arbeit geben. Fuer Re
 
 ## Bereits im Prototyp implementiert
 
-### Ortsbesichtigung (\`civ_visit\`)
+### Ortsbesichtigung (`civ_visit`)
 
 Die Mannschaft wird an einen definierten Punkt geschickt und muss den Bereich fuer die vom Skalierungsprofil vorgegebene Zeit aufsuchen. Keine Gegnergenerierung.
 
-### Botengang (\`civ_courier\`)
+### Botengang (`civ_courier`)
 
-Phase 1: Zum ausgewählten \`dyn_zone_X\`-Marker fahren, mindestens zehn Sekunden bleiben. Phase 2: Zum Marker \`dyn_civ_dropoff\` fahren und weitere zehn Sekunden dort bleiben. Das BIS-Task-Ziel wechselt in Phase 2. **Das Abholen/Abgeben ist simuliert.** Kein physischer Gegenstand, Inventar, Unterschrift oder Fahrzeugtransport.
+Phase 1: Zum ausgewählten `dyn_zone_X`-Marker fahren, mindestens zehn Sekunden bleiben. Phase 2: Zum Marker `dyn_civ_dropoff` fahren und weitere zehn Sekunden dort bleiben. Das BIS-Task-Ziel wechselt in Phase 2. **Das Abholen/Abgeben ist simuliert.** Kein physischer Gegenstand, Inventar, Unterschrift oder Fahrzeugtransport.
 
 ### Bereits vorhandene zivile Varianten
 
@@ -18,18 +18,18 @@ Aufklaerung, Personenschutz und Versorgung duerfen von Zivilspielern ohne automa
 
 ## Optionale Weltbevoelkerung
 
-Host-Menue: **Zivil EIN** / **Zivil AUS**. Server kontrolliert alle 25 Sekunden die Bevoelkerung. Die Agentenzahl ist begrenzt und skaliert mit der Zahl lebender Spieler. Keine unkontrollierten Respawn- oder Action-Duplikate. In der Mission keine \`setFriend\`-Aenderungen gegen \`civilian\` durchfuehren.
+Host-Menue: **Zivil EIN** / **Zivil AUS**. Server kontrolliert alle 25 Sekunden die Bevoelkerung. Die Agentenzahl ist begrenzt und skaliert mit der Zahl lebender Spieler. Keine unkontrollierten Respawn- oder Action-Duplikate. In der Mission keine `setFriend`-Aenderungen gegen `civilian` durchfuehren.
 
-Beispielkonfiguration in \`description.ext\`:
+Beispielkonfiguration in `description.ext`:
 
-\`\`\`cpp
+```cpp
 playerSide = "AUTO";
 ambientCivEnabled = 0;
 ambientCivMax = 16;
 ambientCivPerPlayer = 2;
 ambientCivClasses[] = {"C_man_1"};
 civilDropoffMarker = "dyn_civ_dropoff";
-\`\`\`
+```
 
 ## Ideen fuer die naechsten Versionen (noch NICHT implementiert)
 
@@ -45,4 +45,4 @@ Fuer diese Erweiterungen braucht es getrennte Interaktions-, Verkehrs- und Rolle
 
 ## Zu testen
 
-In 3DEN zivile Playable-Einheiten anlegen, alle Seiten ausser CIV ohne spielbare Slots lassen, \`dyn_zone_1\` bis \`dyn_zone_3\`, \`dyn_civ_dropoff\` und \`respawn_civilian\` setzen. Botengang ueber beide Phasen abschliessen, anschliessend Zivil EIN/AUS in Stadt, Dorf und unbesiedeltem Gebiet pruefen. Erst nach echtem Multiplayer-Test als lauffaehig kennzeichnen.
+In 3DEN zivile Playable-Einheiten anlegen, alle Seiten ausser CIV ohne spielbare Slots lassen, `dyn_zone_1` bis `dyn_zone_3`, `dyn_civ_dropoff` und `respawn_civilian` setzen. Botengang ueber beide Phasen abschliessen, anschliessend Zivil EIN/AUS in Stadt, Dorf und unbesiedeltem Gebiet pruefen. Erst nach echtem Multiplayer-Test als lauffaehig kennzeichnen.
