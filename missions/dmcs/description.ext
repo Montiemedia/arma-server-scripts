@@ -1,5 +1,5 @@
-// Reiner COOP-/PvE-Missionskern: menschliche Spieler nur auf BLUFOR.
-// In 3DEN ausschliesslich BLUFOR-Slots als Playable konfigurieren.
+// Reiner COOP-/PvE-Missionskern. Alle vier Seiten moeglich, aber pro Mission
+// genau eine gemeinsame Spieler-Seite (WEST/EAST/GUER/CIV).
 author = "DMCS Prototype";
 onLoadName = "Dynamic Mission Control System";
 respawn = 3;
@@ -11,10 +11,24 @@ class DYN_Settings {
     zones[] = {"dyn_zone_1", "dyn_zone_2", "dyn_zone_3"};
     // OPTIONAL: Zeus-/Lagedarsteller-UIDs, die auch ohne Serveradmin freigeschaltet werden.
     trustedUIDs[] = {};
+    // AUTO nutzt die erste gemeinsame Spieler-Seite, auch CIV ist moeglich.
+    // Alternativ fest: WEST, EAST, GUER oder CIV.
+    playerSide = "AUTO";
     maxActive = 2;
     maxTasks = 30;
-    enemyRifle = "O_Soldier_F";
-    enemyAR = "O_Soldier_AR_F";
+    // Gegnerklassen werden anhand der Spieler-Seite gewaehlt.
+    // Anpassen fuer RHS/3CB/BWMod - CfgVehicles-Klassen muessen existieren.
+    enemyEastRifle = "O_Soldier_F";
+    enemyEastAR = "O_Soldier_AR_F";
+    enemyWestRifle = "B_Soldier_F";
+    enemyWestAR = "B_Soldier_AR_F";
+    // Abhol- und Abgabestation fuer den zivilen Botengang.
+    civilDropoffMarker = "dyn_civ_dropoff";
+    // Dynamisches Zivilleben: im Hostmenue ein- und ausschaltbar.
+    ambientCivEnabled = 0;
+    ambientCivMax = 16;
+    ambientCivPerPlayer = 2;
+    ambientCivClasses[] = {"C_man_1"};
     destroyTarget = "O_Quadbike_01_F";
     rescueTarget = "C_man_1";
     supplyTarget = "Box_NATO_Ammo_F";
@@ -25,6 +39,8 @@ class CfgFunctions {
         class Core {
             file = "dyn\functions";
             class authorized {};
+            class teamSide {};
+            class civLoop {};
             class scale {};
             class publish {};
             class request {};
