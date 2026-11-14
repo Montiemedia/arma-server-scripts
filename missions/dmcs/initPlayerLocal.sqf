@@ -1,13 +1,6 @@
 // Lokaler, guenstiger Respawn/JIP-Waechter; keine Aktionen auf dem Dedicated Server.
-// Aktualisiert offene Host-Dialoge bei Serverstatus-Aenderungen, auch durch andere Hosts.
-if (hasInterface) then {
-    "DYN_publicTasks" addPublicVariableEventHandler {
-        [] call DYN_fnc_uiRefresh;
-    };
-    "DYN_publicCiv" addPublicVariableEventHandler {
-        [] call DYN_fnc_uiRefresh;
-    };
-};
+// Status fuer offene Dialoge wird alle 3 Sekunden aktualisiert.
+// Keine addPublicVariableEventHandler: deprecated/broken (HEMTT-L-S09).
 [] spawn {
     waitUntil { sleep 1; !isNull player };
     while { true } do {
@@ -36,6 +29,9 @@ if (hasInterface) then {
                 nil, 2, false, true, "",
                 "!((['treat'] call DYN_fnc_interactionAvailable) isEqualTo '')"
             ];
+        };
+        if (!isNull (findDisplay 7970)) then {
+            [] call DYN_fnc_uiRefresh;
         };
         sleep 3;
     };
