@@ -47,7 +47,7 @@ class DYN_HostDialog {
         class Title: DYN_RscText {
             text = "DMCS | EINSATZFUEHRUNG";
             x = safezoneX + safezoneW * 0.21; y = safezoneY + safezoneH * 0.205;
-            w = safezoneW * 0.56; h = safezoneH * 0.04;
+            w = safezoneW * 0.23; h = safezoneH * 0.04;
         };
         class Tasks: DYN_RscListBox {
             idc = 1800;
@@ -75,6 +75,25 @@ class DYN_HostDialog {
         class Pause: Create { text = "Pausieren"; x = safezoneX + safezoneW * 0.51; onButtonClick = "['pause'] call DYN_fnc_uiAction"; };
         class Resume: Create { text = "Fortsetzen"; x = safezoneX + safezoneW * 0.61; onButtonClick = "['resume'] call DYN_fnc_uiAction"; };
         class Remove: Create { text = "Entfernen"; x = safezoneX + safezoneW * 0.71; w = safezoneW * 0.08; onButtonClick = "['remove'] call DYN_fnc_uiAction"; };
+        class CivOn: DYN_RscButton {
+            text = "Zivil EIN";
+            x = safezoneX + safezoneW * 0.43; y = safezoneY + safezoneH * 0.205;
+            w = safezoneW * 0.10; h = safezoneH * 0.042;
+            onButtonClick = "['civ_on'] call DYN_fnc_uiAction";
+        };
+        class CivOff: DYN_RscButton {
+            text = "Zivil AUS";
+            x = safezoneX + safezoneW * 0.54; y = safezoneY + safezoneH * 0.205;
+            w = safezoneW * 0.10; h = safezoneH * 0.042;
+            onButtonClick = "['civ_off'] call DYN_fnc_uiAction";
+        };
+        class CivStatus: DYN_RscText {
+            idc = 1803;
+            text = "Zivilisten: AUS";
+            x = safezoneX + safezoneW * 0.43; y = safezoneY + safezoneH * 0.236;
+            w = safezoneW * 0.35; h = safezoneH * 0.021;
+            sizeEx = 0.025;
+        };
         class Refresh: DYN_RscButton {
             text = "Aktualisieren"; x = safezoneX + safezoneW * 0.65; y = safezoneY + safezoneH * 0.205;
             w = safezoneW * 0.14; h = safezoneH * 0.042;
