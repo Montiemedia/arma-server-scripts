@@ -25,7 +25,7 @@ while {true} do {
         {typeOf _x != "HeadlessClient_F"}
     };
     private _limit = if (DYN_civEnabled) then {
-        _max min (_perPlayer * count _humans)
+        if (count _valid > 0) then {_max min (_perPlayer * count _humans)} else {0}
     } else {0};
 
     // Eigene Agenten: Tote, verlassene Gebiete und Ueberhang bereinigen.
@@ -72,7 +72,6 @@ while {true} do {
                         ];
                         if (!isNull _agent) then {
                             _agent setBehaviour "CARELESS";
-                            _agent setSpeedMode "LIMITED";
                             DYN_civAgents pushBack _agent;
                         };
                     };
