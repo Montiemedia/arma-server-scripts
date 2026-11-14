@@ -24,22 +24,31 @@ Jede Seite enthaelt **10 Kategorien mit je 20 Szenarien**, insgesamt 40 Kategori
 * `objective`: menschlich lesbares Einsatzziel
 * `story`: zusammengestellter Briefingtext
 * `suggested_mechanic`: grober Bezug zu einer DMCS-Auftragsart, **keine Garantie auf Umsetzung**
-* `implementation`: immer `CONCEPT_ONLY`, da die Bibliothek noch nicht dynamisch in der Missionsengine geladen wird
+* `implementation`: weiter `CONCEPT_ONLY`, weil die Erzaehlung noch nicht als spezifische Szenerie mit Objekten/NPCs umgesetzt ist. Die Vorlagen selbst werden seit v0.4 im Host-Menue als Config-Klassen geladen und koennen als generischer DMCS-Auftrag aktiviert werden.
 * `estimated_minutes` und `players_recommended`: redaktionelle Richtwerte, **nicht gemessene Spielzeiten**
 
-## Wie die Szenarien spaeter spielbar werden
+## Laufzeit-Einbindung seit Prototyp 0.4
 
-1. Pro Szenario ein erweiterbares `ScenarioDefinition` mit erforderlichen Zielen, NPCs, Spawnzonen, Eskalationsregeln, Bedingungen und erlaubten Fraktionen festlegen.
-2. Einen serverautoritativen Katalog-Loader fuer Arma/SQF implementieren. **Arma 3 liest diese JSON-Dateien derzeit nicht automatisch ein.** Erst beim Export in ein kompatibles Missionskonfigurationsformat lassen sie sich direkt in einer PBO verwenden.
-3. Terrain-Resolver: die abstrakten Schauplaetze auf tatsaechliche Kartenobjekte, Orte, Strassen und freie Spawns abbilden.
-4. Mechanikbibliothek ausbauen: Dialoge, Suche/Verifikation, Einschaetzung, Transport, Personeninteraktion, Dokumentation, Bergung, Verkehrs-/Umweltreaktionen und mehrphasige Auftraege.
-5. Eine Host-UI mit Filter nach Seite, Kategorie, Spielermenge, Dauer und Schwierigkeit anbieten.
-6. Multiplayer-/JIP-, Mod-, Dedicated- und Performance-Tests auf realen Karten durchfuehren.
+Die 800 JSON-Eintraege werden mit `python3 missions/dmcs/tools/build_scenario_catalog.py` in vier `.hpp`-Dateien unter `dyn/scenarios/` exportiert. Ueber `dyn/scenarios/catalog.hpp` und `description.ext` stehen die Definitionen als `DYN_ScenarioCatalog` in `missionConfigFile` bereit. **Die SQF-Engine liest nicht die JSON-Dateien direkt.**
 
-**Nicht behaupten:** 800 fertig skriptete Spielauftraege, 800 getestete Missionen, echte KI-Dialoge, automatische Kartengenerierung oder bereits integrierte JSON-Auswahl. Das sind Planungsdaten.
+Ueber das Host-Menue (`DMCS | Einsatzfuehrung` -> `Szenariobibliothek (800)`) sind Seite, Kategorie, empfohlene Spielerzahl, Einsatzdauer, Szenario und 3DEN-Zonenmarker waehlbar. Der Server prueft die ID und die gemeinsame Spieler-Seite vor dem Erstellen eines Entwurfs und beim Aktivieren. Dann verwendet der BIS-Task die gewaehlten Texte und die vorhandene Basismethode.
 
+**Bereits implementiert:** Datenexport, Auswahloberflaeche, clientseitige Filterung, servergepruefte Entwurfsanlage, Briefinguebernahme, generische Auftragsaktivierung. **Noch offen:** spezielle Story-Ereignisse, interaktive Rollen/Dialoge, realistische Brand- und Unfallobjekte, automatischer Terrain-Resolver, dynamische Story-Komplikationen, spezifische NPC-Reaktionen und vollstaendige Multiplayer-Abnahme.
+
+Details: [Szenariomanager](../docs/SCENARIO_MANAGER.md).
+
+## Naechste Umsetzungsschritte
+
+1. Pro Szenario ein erweiterbares `ScenarioDefinition` fuer konkrete Objekte, Zustaende, NPCs, Rollen und Folgeereignisse festlegen.
+2. Terrain-Resolver fuer Kartenobjekte, freie Spawn-Positionen und Ortstypen erarbeiten.
+3. Komplette Einzelmechaniken wie Rettung, Brand, Unfallaufnahme, Interviews, Lieferung, Schutz und Evakuierung integrieren.
+4. Multiplayer-/JIP-, Mod-, Dedicated- und Performance-Tests auf realen Karten durchfuehren.
+
+**Nicht behaupten:** 800 fertig geskriptete Einsaetze, reale automatisch erzeugte Schadenlagen, getestete Missionen oder jede Modkarte ohne Anpassung. Derzeit sind 800 **Briefings und Basismethoden** nutzbar.
 ## Pruefung
 
 `python3 missions/dmcs/tools/validate_scenarios.py`
+
+`python3 missions/dmcs/tools/build_scenario_catalog.py --check`
 
 Der Validator kontrolliert JSON-Gueltigkeit, IDs, Kategorien und Pflichtfelder, **nicht** die militaerische oder soziale Realitaetsnaehe, den Spielablauf oder das Multiplayer-Verhalten. Die Geschichten sind redaktionelle Vorlagen und sollten vor realem Gebrauch an Land, Fraktion, Einsatzziel und lokalen Kontext angepasst werden.
