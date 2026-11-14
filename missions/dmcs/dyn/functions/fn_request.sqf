@@ -22,7 +22,7 @@ if !([_sender] call DYN_fnc_authorized) exitWith {
 };
 private _zones = getArray (missionConfigFile >> "DYN_Settings" >> "zones");
 private _validZone = (_zone in _zones) && {markerShape _zone != ""} && {!surfaceIsWater (getMarkerPos _zone)};
-private _types = ["recon", "secure", "destroy", "rescue", "supply"];
+private _types = ["recon", "secure", "destroy", "rescue", "supply", "civ_visit", "civ_courier"];
 private _known = _id in (keys DYN_registry);
 private _r = if (_known) then {DYN_registry get _id} else {createHashMap};
 private _maxTasks = getNumber (missionConfigFile >> "DYN_Settings" >> "maxTasks");
@@ -36,7 +36,7 @@ switch (_verb) do {
             DYN_nextId = DYN_nextId + 1;
             private _new = createHashMapFromArray [
                 ["id", _newId], ["type", _type], ["zone", _zone],
-                ["state", "DRAFT"], ["profile", createHashMap],
+                ["state", "DRAFT"], ["side", sideUnknown], ["profile", createHashMap],
                 ["target", objNull], ["units", []], ["groups", []],
                 ["position", [0,0,0]], ["progress", 0], ["cleanupAt", -1]
             ];
@@ -85,7 +85,7 @@ switch (_verb) do {
                 [_id, "CANCELED", true] call BIS_fnc_taskSetState;
             };
             if !((_r get "state") isEqualTo "DRAFT") then {
-                [_id, west, true] call BIS_fnc_deleteTask;
+                [_id, _r get "side", true] call BIS_fnc_deleteTask;
             };
             _r set ["state", "REMOVING"];
             if ([_r] call DYN_fnc_cleanup) then {
@@ -94,6 +94,26 @@ switch (_verb) do {
             _reply = format ["%1 entfernt / Bereinigung gestartet", _id];
             _changed = true;
         };
+    };
+    case "civ_on": {
+        if (!DYN_civEnabled) then {
+            DYN_civEnabled = true;
+            DYN_publicCiv = [true, count DYN_civAgents];
+            publicVariable "DYN_publicCiv";
+            _changed = true;
+        };
+        _reply = "Dynamisches Zivilleben ist aktiviert";
+    };
+    case "civ_off": {
+        if (DYN_civEnabled || {count DYN_civAgents > 0}) then {
+            DYN_civEnabled = false;
+            {if (!isNull _x) then {deleteVehicle _x;};} forEach DYN_civAgents;
+            DYN_civAgents = [];
+            DYN_publicCiv = [false, 0];
+            publicVariable "DYN_publicCiv";
+            _changed = true;
+        };
+        _reply = "Dynamisches Zivilleben ist deaktiviert";
     };
     default { _reply = "Unbekannter Befehl"; };
 };
