@@ -4,6 +4,13 @@
 
 Serverautoritatives SQF-Missionsframework mit Host-Menue, vorbereitbaren Auftraegen, Spieler-Skalierung und optionalem dynamischem Zivilleben. Kein Pflichtmod. Die finale Mission und `mission.sqm` werden in 3DEN erstellt.
 
+## Eigenstaendige Mod-Ausgabe (v0.5.0 – TEST)
+
+Der HEMTT-Addon-Build liegt unter [mod/](mod/). Er nutzt die aktuelle Missions-SQF-Engine als Quelle, erzeugt daraus eine eigenstaendige `config.cpp` mit CfgFunctions-`postInit` und laedt den Katalog aus den vier HPP-Dateien. Beim Start einer Multiplayer-Mission erzeugt der Server automatisch bis zu 12 Einsatzmarker aus freien Landpositionen. Damit entfaellt bei der **Mod-Variante** eine besondere DMCS-`mission.sqm` und das manuelle Setzen der drei `dyn_zone_*`-Marker.
+
+**[DMCS-Testmod bauen/herunterladen](../../.github/workflows/dmcs-mod-build.yml)**; [Installationsanleitung](mod/README.md). Im oeffentlichen GitHub-Workflow werden Python-Checks, HEMTT-Release und eine PBO/BIsign/BIkey-Pruefung ausgefuehrt. Das Artifakt kann erst nach einem erfolgreichen Lauf heruntergeladen werden. Eine fertig gebaute Mod-Datei sowie ein Arma-3-Mehrspielertest sind bis zur tatsaechlichen Pruefung **nicht bestaetigt**.
+
+Die Mod muss aktuell **auf Server und Clients** geladen werden. Missionen mit eigener strenger RemoteExec-Whitelist oder Mod-Konflikten benoetigen gesonderte Tests. Die 800 Geschichten bleiben generische Briefing-Vorlagen ohne individuelle Ereignismodule. Die im Folgenden beschriebenen 3DEN-Schritte betreffen die **Missionsordner-Variante**.
 ## Szenariobibliothek: 800 fiktive Auftraege
 
 Unter [scenarios/README.md](scenarios/README.md) liegen **200 erzählerische Szenariovorlagen pro Seite (WEST / EAST / GUER / CIV)**, insgesamt 800 mit Namen, Briefings, Lagekomplikationen, Zielen, Zeit- und Spieler-Richtwerten. Lesefassungen in Markdown und strukturierte Daten in JSON.
