@@ -84,7 +84,9 @@ def main() -> int:
 
     shutil.copyfile(DMCS / "dyn" / "dialog.hpp", ADDON / "dialog.hpp")
     for entry in ("initServer.sqf", "initPlayerLocal.sqf"):
-        shutil.copyfile(DMCS / entry, ADDON / entry)
+        body = (DMCS / entry).read_text(encoding="utf-8")
+        body = body.replace("missionConfigFile", "configFile")
+        (ADDON / entry).write_text(body, encoding="utf-8", newline="\\n")
     (ADDON / "$PBOPREFIX$").write_text(PREFIX + "\n", encoding="utf-8")
 
     # All addon functions must be loaded from the PBO prefix, not
