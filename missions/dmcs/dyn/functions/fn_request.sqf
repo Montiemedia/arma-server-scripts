@@ -96,13 +96,23 @@ switch (_verb) do {
         };
     };
     case "civ_on": {
-        if (!DYN_civEnabled) then {
-            DYN_civEnabled = true;
-            DYN_publicCiv = [true, count DYN_civAgents];
-            publicVariable "DYN_publicCiv";
-            _changed = true;
+        private _classes = getArray (
+            missionConfigFile >> "DYN_Settings" >> "ambientCivClasses"
+        );
+        private _valid = _classes select {
+            isClass (configFile >> "CfgVehicles" >> _x)
         };
-        _reply = "Dynamisches Zivilleben ist aktiviert";
+        if (count _valid isEqualTo 0) then {
+            _reply = "Zivilleben nicht aktivierbar: keine gueltigen CfgVehicles-Klassen";
+        } else {
+            if (!DYN_civEnabled) then {
+                DYN_civEnabled = true;
+                DYN_publicCiv = [true, count DYN_civAgents];
+                publicVariable "DYN_publicCiv";
+                _changed = true;
+            };
+            _reply = "Dynamisches Zivilleben ist aktiviert";
+        };
     };
     case "civ_off": {
         if (DYN_civEnabled || {count DYN_civAgents > 0}) then {
