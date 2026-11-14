@@ -1,0 +1,21 @@
+name: DMCS Static Preflight
+on:
+  push:
+    paths:
+      - 'missions/dmcs/**'
+      - '.github/workflows/dmcs-static.yml'
+  pull_request:
+    paths:
+      - 'missions/dmcs/**'
+      - '.github/workflows/dmcs-static.yml'
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Validate DMCS source structure
+        run: python3 missions/dmcs/tools/validate_static.py
