@@ -40,6 +40,9 @@ class CfgFunctions {
             file = "dyn\functions";
             class authorized {};
             class teamSide {};
+            class scenarioGet {};
+            class scenarioRefresh {};
+            class scenarioSubmit {};
             class civLoop {};
             class interactionAvailable {};
             class interactRequest {};
@@ -78,3 +81,4 @@ class CfgRemoteExec {
 };
 
 #include "dyn\dialog.hpp"
+#include "dyn\scenarios\catalog.hpp"
