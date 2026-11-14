@@ -2,15 +2,15 @@
 // Files can be regenerated with: python3 tools/build_scenario_catalog.py
 class DYN_ScenarioCatalog {
     class WEST {
-        #include "dyn\scenarios\west.hpp"
+        #include "west.hpp"
     };
     class EAST {
-        #include "dyn\scenarios\east.hpp"
+        #include "east.hpp"
     };
     class GUER {
-        #include "dyn\scenarios\guer.hpp"
+        #include "guer.hpp"
     };
     class CIV {
-        #include "dyn\scenarios\civ.hpp"
+        #include "civ.hpp"
     };
 };
