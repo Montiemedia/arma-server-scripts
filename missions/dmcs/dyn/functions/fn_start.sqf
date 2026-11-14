@@ -20,9 +20,16 @@ if (_teamSide isEqualTo civilian && {_type in ["secure", "destroy"]}) exitWith {
 private _profile = [_type] call DYN_fnc_scale;
 if ((_profile get "players") < 1) exitWith {false};
 
-private _pos = getMarkerPos (_r get "zone");
-if (surfaceIsWater _pos) exitWith {false};
 private _cfg = missionConfigFile >> "DYN_Settings";
+private _zone = _r get "zone";
+// Entwurfsmarker koennen seit der Anlage entfernt worden sein.
+if !(_zone in (getArray (_cfg >> "zones")) &&
+    {markerShape _zone != ""}) exitWith {
+    diag_log format ["[DMCS] Ungueltiger Missionsmarker: %1", _zone];
+    false
+};
+private _pos = getMarkerPos _zone;
+if (surfaceIsWater _pos) exitWith {false};
 private _drop = getText (_cfg >> "civilDropoffMarker");
 private _dropPos = [0,0,0];
 if (_type isEqualTo "civ_courier") then {
