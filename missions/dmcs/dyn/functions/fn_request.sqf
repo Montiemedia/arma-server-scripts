@@ -48,13 +48,63 @@ switch (_verb) do {
             _changed = true;
         } else { _reply = "Typ, Zone oder Auftragslimit ungueltig"; };
     };
+    case "scenario": {
+        // The client only controls the catalog ID and an approved marker.
+        // Every other field is taken from the server's missionConfigFile.
+        private _definition = [_id] call DYN_fnc_scenarioGet;
+        private _teamSide = [] call DYN_fnc_teamSide;
+        private _sideKey = switch (_teamSide) do {
+            case west: {"WEST"};
+            case east: {"EAST"};
+            case resistance: {"GUER"};
+            case civilian: {"CIV"};
+            default {""};
+        };
+        if (!isClass _definition || {_sideKey isEqualTo ""} ||
+            {!_validZone} || {count DYN_registry >= _maxTasks}) then {
+            _reply = "Szenario, Spielerseite, Einsatzsektor oder Auftragslimit ungueltig";
+        } else {
+            private _configSide = getText (_definition >> "side");
+            private _mechanic = getText (_definition >> "mechanic");
+            if (_configSide != _sideKey || {!(_mechanic in _types)} ||
+                {_teamSide isEqualTo civilian &&
+                    {_mechanic in ["secure", "destroy"]}}) then {
+                _reply = "Die Vorlage ist fuer die gemeinsame COOP-Seite oder den Auftragstyp nicht zulaessig";
+            } else {
+                private _newId = format ["DMCS_%1", DYN_nextId];
+                DYN_nextId = DYN_nextId + 1;
+                private _new = createHashMapFromArray [
+                    ["id", _newId], ["type", _mechanic], ["zone", _zone],
+                    ["scenarioId", _id],
+                    ["state", "DRAFT"], ["side", sideUnknown],
+                    ["profile", createHashMap], ["target", objNull],
+                    ["units", []], ["groups", []], ["position", [0,0,0]],
+                    ["progress", 0], ["stage", 0], ["cleanupAt", -1]
+                ];
+                DYN_registry set [_newId, _new];
+                _reply = format [
+                    "%1: Vorlage %2 (%3) als Entwurf angelegt",
+                    _newId, _id, getText (_definition >> "title")
+                ];
+                _changed = true;
+            };
+        };
+    };
     case "edit": {
-        if (_known && {_type in _types} && {_validZone} && {(_r get "state") isEqualTo "DRAFT"}) then {
-            _r set ["type", _type];
-            _r set ["zone", _zone];
-            _reply = format ["Entwurf %1 bearbeitet", _id];
-            _changed = true;
-        } else { _reply = "Bearbeitung nur an gueltigen Entwuerfen"; };
+        if (_known && {_type in _types} && {_validZone} &&
+            {(_r get "state") isEqualTo "DRAFT"}) then {
+            private _fromCatalog = _r getOrDefault ["scenarioId", ""];
+            if (_fromCatalog != "" && {_type != (_r get "type")}) then {
+                _reply = "Bibliotheksentwurf: nur Einsatzsektor aenderbar, nicht die Basismethode";
+            } else {
+                _r set ["type", _type];
+                _r set ["zone", _zone];
+                _reply = format ["Entwurf %1 bearbeitet", _id];
+                _changed = true;
+            };
+        } else {
+            _reply = "Bearbeitung nur an gueltigen Entwuerfen";
+        };
     };
     case "activate": {
         private _active = {((_x get "state") in ["ACTIVE", "PAUSED"])} count (values DYN_registry);
