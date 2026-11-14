@@ -42,6 +42,12 @@ while {true} do {
                 case "rescue": {8};
                 case "supply": {10};
                 case "civ_visit": {25};
+                case "civ_medical": {
+                    // Abschluss ausschliesslich ueber servervalidierte Spieleraktion.
+                    if (isNull _tgt || {!alive _tgt}) then {
+                        _finish = "FAILED";
+                    };
+                };
                 case "civ_courier": {12};
                 default {10};
             };
