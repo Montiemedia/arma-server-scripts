@@ -1,22 +1,34 @@
-# Kartenkompatibilitaet und Mod-Abhaengigkeiten
+# DMCS – Karten- und Fraktionskompatibilitaet
 
-Der SQF-Kern ist nicht an Altis gebunden. Je Terrain wird jedoch eine eigene mission.sqm benoetigt; Welt-Endung wie DMCS.Altis, DMCS.Enoch usw.
+DMCS ist kein an Altis gebundenes Framework. Pro Karte ist eine eigene \`mission.sqm\` mit passendem Welt-Namenssuffix erforderlich, z. B. \`DMCS.Altis\` oder \`DMCS.Enoch\`.
 
-## Pflichtpruefungen
+## Seiten und Fraktionen
 
-1. Karte auf Server und allen Clients vorhanden; Abhaengigkeiten und Keys korrekt.
-2. Ausschliesslich Playable-BLUFOR-Slots (auch fuer Zeus/Lagedarsteller), respawn_west und dyn_zone_1 bis dyn_zone_3 in 3DEN anlegen. Keine menschlich spielbaren gegnerischen oder zivilen Slots; DMCS ist ausschliesslich COOP/PvE.
-3. Markerzentren sowie Spawnradius landseitig, ausreichend frei und von Objekten/Wasser entfernt.
-4. Konfigurierte CfgVehicles-Klassen auf dem Server vorhanden.
-5. Verhalten von KI-Navigation, Gefechtsbereich und Zielspawn auf der konkreten Karte testen.
-6. Fuer ACE, RHS, 3CB, CUP, BWMod, LAMBS und ACRE: Schnittstellen und CfgRemoteExec im konkreten Modset pruefen.
+* COOP-Spieler duerfen **WEST, EAST, GUER oder CIV** als Seite verwenden.
+* Innerhalb der gemeinsamen Spieler-Seite koennen verschiedene Vanilla-/Mod-Fraktionen vertreten sein.
+* Die automatische Erkennung verweigert Auftragsstart bei gleichzeitigem menschlichen Einsatz auf unterschiedlichen Seiten, denn gemischte Seiten-Allianzen sind in diesem Prototyp noch nicht umgesetzt.
+* Die Gegnerfraktion wird per Missions-Konfig \`enemyEastRifle/AR\` bzw. \`enemyWestRifle/AR\` festgelegt; ohne Mod-Anpassung wird auf Vanilla-Klassen zurueckgegriffen.
+* EAST-Spieler bekommen WEST als Gegner. WEST oder GUER bekommen EAST als Gegner. CIV-Spieler erhalten keine durch DMCS gespawnten Gegner. Fuer GUER-Einsaetze Feindschaft im 3DEN-Intel setzen oder pruefen. **Keine globalen feindlichen Beziehungen zur zivilen Seite setzen**.
 
-## Bekannte technische Grenze
+## 3DEN-Marker
 
-Version 0.1 prueft im Wesentlichen nur die Marker-Mittelposition auf Wasser, nicht alle spawnbaren Offsets auf Kollisionsfreiheit oder Gefahren. Es gibt noch keine Terrain-Adapter, keine automatische Positionssuche und keine Garantie fuer beliebige Mod-Konflikte.
+* \`dyn_zone_1\`, \`dyn_zone_2\`, \`dyn_zone_3\`: vordefinierte Auftragssektoren.
+* \`dyn_civ_dropoff\`: Botengang-Abgabepunkt (mindestens 60 m vom gewaehlten Auftragseinsatzort).
+* \`respawn_west\`, \`respawn_east\`, \`respawn_guerrila\` oder \`respawn_civilian\` passend zur gewaehlten Team-Seite.
 
-## Geplante Erweiterung
+## Optionale zivile Simulation
 
-Ein Terrain-Profil je Mission mit validierten Einsatzsektoren, erlaubten Spawnzonen, Blacklists, Klassensatz und Sicherheitstest. Die Serverlogik bleibt dabei ueber Karten hinweg gleich.
+Das Modul versucht Agenten nur nahe bereits benannter Staedte/Doerfer und in Strassennaehe zu erzeugen. Auf Terrains ohne solche Weltinformationen bleibt die Bevoelkerung gegebenenfalls leer. Es sind noch keine Mod-spezifischen Location-Adapter integriert.
 
-**Status:** Architekturansatz, keine nachgewiesene Vollkompatibilitaet.
+## Abnahmeliste je Karte
+
+1. Alle benoetigten Kartenmods und Signatur-Keys auf Server/Clients vorhanden.
+2. Menschliche Coop-Slots und korrekter Respawn fuer die gewaehlte Spieler-Seite.
+3. Auftrags- und Botengang-Marker auf freiem, begehbarem Land.
+4. Spieler- und Gegner-Klassen in \`CfgVehicles\` vorhanden, richtige Seitenzuordnung der erzeugten Gegner.
+5. Fraktionsbeziehungen im Intel-Dialog passend zur Missionsidee.
+6. KI-Pfadfindung, Aufgabe, JIP-Sync und Objektbereinigung mit realen Spielern testen.
+7. Civ-Modul nahe Ortschaften und im freien Gelaende mit aktivierter/deaktivierter Population testen.
+8. Mod-RPC-Abhaengigkeiten und RPT-Fehler auf TF133-Server pruefen.
+
+**Status:** Konzept mit Prototypcode; keine Garantie fuer alle Modkarten, Fraktionen oder Gameplay-Mods.
