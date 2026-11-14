@@ -2,6 +2,7 @@
 DYN_registry = createHashMap;
 DYN_nextId = 1;
 DYN_lastRequests = createHashMap;
+DYN_lastInteractions = createHashMap;
 DYN_publicTasks = [];
 publicVariable "DYN_publicTasks";
 DYN_civEnabled = (getNumber (missionConfigFile >> "DYN_Settings" >> "ambientCivEnabled")) > 0;
