@@ -69,6 +69,7 @@ while {count _selected < _maxZones && {_attempts < 250}} do {
     private _name = format ["DMCS_AUTO_%1", (_forEachIndex + 1)];
     if !(_name in allMapMarkers) then {
         createMarker [_name, _x];
+        _name setMarkerShape "ICON";
         _name setMarkerType "mil_dot";
         _name setMarkerColor "ColorOrange";
         _name setMarkerText format [
