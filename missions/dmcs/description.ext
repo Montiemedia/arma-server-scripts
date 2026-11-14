@@ -1,0 +1,58 @@
+author = "DMCS Prototype";
+onLoadName = "Dynamic Mission Control System";
+respawn = 3;
+respawnDelay = 8;
+disabledAI = 1;
+
+class DYN_Settings {
+    // 3DEN-Marker mit diesen Namen selbst anlegen; nur diese Zonen sind erlaubt.
+    zones[] = {"dyn_zone_1", "dyn_zone_2", "dyn_zone_3"};
+    // OPTIONAL: Zeus-/Lagedarsteller-UIDs, die auch ohne Serveradmin freigeschaltet werden.
+    trustedUIDs[] = {};
+    maxActive = 2;
+    maxTasks = 30;
+    enemyRifle = "O_Soldier_F";
+    enemyAR = "O_Soldier_AR_F";
+    destroyTarget = "O_Quadbike_01_F";
+    rescueTarget = "C_man_1";
+    supplyTarget = "Box_NATO_Ammo_F";
+};
+
+class CfgFunctions {
+    class DYN {
+        class Core {
+            file = "dyn\functions";
+            class authorized {};
+            class scale {};
+            class publish {};
+            class request {};
+            class start {};
+            class finish {};
+            class cleanup {};
+            class tick {};
+            class uiRefresh {};
+            class uiSelect {};
+            class uiAction {};
+            class feedback {};
+        };
+    };
+};
+
+// Strikte Mission-Whitelist; bei Verwendung weiterer Mods deren RE-Bedarf pruefen.
+class CfgRemoteExec {
+    class Functions {
+        mode = 1;
+        jip = 0;
+        class DYN_fnc_request { allowedTargets = 2; jip = 0; };
+        class DYN_fnc_feedback { allowedTargets = 1; jip = 0; };
+        // Vanilla-Funktionen, die laut BI im Spielkern remote ausgefuehrt werden.
+        class BIS_fnc_effectKilledAirDestruction { allowedTargets = 0; jip = 0; };
+        class BIS_fnc_effectKilledSecondaries { allowedTargets = 0; jip = 0; };
+        class BIS_fnc_fire { allowedTargets = 0; jip = 0; };
+        class BIS_fnc_objectVar { allowedTargets = 0; jip = 0; };
+        class BIS_fnc_setCustomSoundController { allowedTargets = 0; jip = 0; };
+    };
+    class Commands { mode = 1; jip = 0; };
+};
+
+#include "dyn\dialog.hpp"
