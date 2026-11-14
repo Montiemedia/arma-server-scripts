@@ -22,7 +22,7 @@ if !([_sender] call DYN_fnc_authorized) exitWith {
 };
 private _zones = getArray (missionConfigFile >> "DYN_Settings" >> "zones");
 private _validZone = (_zone in _zones) && {markerShape _zone != ""} && {!surfaceIsWater (getMarkerPos _zone)};
-private _types = ["recon", "secure", "destroy", "rescue", "supply", "civ_visit", "civ_courier"];
+private _types = ["recon", "secure", "destroy", "rescue", "supply", "civ_visit", "civ_courier", "civ_medical"];
 private _known = _id in (keys DYN_registry);
 private _r = if (_known) then {DYN_registry get _id} else {createHashMap};
 private _maxTasks = getNumber (missionConfigFile >> "DYN_Settings" >> "maxTasks");
@@ -38,7 +38,7 @@ switch (_verb) do {
                 ["id", _newId], ["type", _type], ["zone", _zone],
                 ["state", "DRAFT"], ["side", sideUnknown], ["profile", createHashMap],
                 ["target", objNull], ["units", []], ["groups", []],
-                ["position", [0,0,0]], ["progress", 0], ["cleanupAt", -1]
+                ["position", [0,0,0]], ["progress", 0], ["stage", 0], ["cleanupAt", -1]
             ];
             DYN_registry set [_newId, _new];
             _reply = format ["Auftrag %1 angelegt", _newId];
