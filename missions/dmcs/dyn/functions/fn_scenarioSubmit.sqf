@@ -24,6 +24,7 @@ if (markerShape _zone isEqualTo "" ||
     hint "DMCS: Einsatzsektor fehlt oder liegt auf Wasser.";
 };
 
+hint "DMCS: Szenarioentwurf angefragt. Serverrueckmeldung beachten.";
 if (isServer) then {
     ["scenario", _scenarioId, "", _zone] call DYN_fnc_request;
 } else {
@@ -31,4 +32,3 @@ if (isServer) then {
         "DYN_fnc_request", 2
     ];
 };
-hint "DMCS: Szenarioentwurf beim Server angefragt. Serverrueckmeldung beachten.";
