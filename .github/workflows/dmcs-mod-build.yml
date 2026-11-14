@@ -1,0 +1,46 @@
+name: DMCS Mod Build (HEMTT)
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'missions/dmcs/**'
+      - '.github/workflows/dmcs-mod-build.yml'
+  pull_request:
+    paths:
+      - 'missions/dmcs/**'
+      - '.github/workflows/dmcs-mod-build.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Validate JSON and generated config
+        run: |
+          python3 missions/dmcs/tools/validate_scenarios.py
+          python3 missions/dmcs/tools/build_scenario_catalog.py --check
+          python3 missions/dmcs/tools/validate_static.py
+
+      - name: Stage standalone addon from canonical source
+        run: python3 missions/dmcs/mod/tools/stage_addon.py
+
+      - name: Install HEMTT
+        uses: arma-actions/hemtt@v1
+
+      - name: Build signed DMCS test release
+        working-directory: missions/dmcs/mod
+        run: hemtt release
+
+      - name: Upload installable @DMCS archive
+        uses: actions/upload-artifact@v4
+        with:
+          name: DMCS-test-mod-0.5
+          path: missions/dmcs/mod/releases/*.zip
+          if-no-files-found: error
+          retention-days: 30
