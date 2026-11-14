@@ -1,42 +1,71 @@
-# DMCS v0.1 – Dynamic Mission Control System (Arma 3)
+# DMCS – Dynamic Mission Control System (Arma 3)
 
-**Status: Prototyp, nicht in Arma 3 getestet. Kein fertiges PBO.**
+**Status: Prototyp 0.2, nicht in Arma 3 getestet. Nicht als einsatzbereites PBO freigegeben.**
 
-Ein modularer SQF-Missionskern fuer Arma 3 mit Host-Menue, serverautoritativem Auftragsmanagement, Task-Framework und Skalierung nach aktiven BLUFOR-Spielern.
+Serverautoritatives SQF-Missionsframework mit Host-Menue, vorbereitbaren Auftraegen, Spieler-Skalierung und optionalem dynamischem Zivilleben. Kein Pflichtmod. Die finale Mission und \`mission.sqm\` werden in 3DEN erstellt.
 
 ## Spielmodus: ausschliesslich COOP (PvE)
 
-DMCS ist ausschliesslich fuer kooperative Einsaetze konzipiert: Alle menschlichen Teilnehmer spielen gemeinsam auf BLUFOR (west); OPFOR (east) wird nur von der KI gesteuert. Keine PvP-, TvT-, gemischten Spielerfraktions- oder menschlichen Gegenspieler-Modi. Geisel-/Zivilisten-NPCs sind nicht spielbar. Auch Zeus und Lagedarsteller muessen in v0.1 einen BLUFOR-Spielerslot verwenden.
+**Nicht an BLUFOR gebunden.** Spielbare menschliche Einheiten duerfen auf **WEST, EAST, GUER oder CIV** liegen. Die automatische Team-Seitenerkennung (\`playerSide = "AUTO"\`) erkennt beim Aktivieren eines Auftrags die gemeinsame Seite aller anwesenden menschlichen Spieler; eine feste Seite ist konfigurierbar.
 
-## Inhalt
+* Menschen spielen zusammen gegen den vom Server verwalteten Auftrag, **niemals gegeneinander**.
+* Alle menschlichen Teilnehmer muessen derzeit **derselben Arma-Seite** angehoeren. Unterschiedliche Fraktionen **innerhalb** dieser Seite sind zulaessig.
+* Menschen gleichzeitig auf mehreren Seiten (z. B. WEST + GUER) sind **noch nicht** als Koalition unterstuetzt. Die Auftragsaktivierung wird dann verweigert.
+* Gegner-KI: WEST-Spieler -> EAST-Gegner, EAST-Spieler -> WEST-Gegner, GUER-Spieler -> EAST-Gegner. Klassen sind im Missionsprofil editierbar.
+* Bei CIV-Spielern gibt es keine durch DMCS erzwungene Feindschaft gegen CIV: Sicherung und Zerstoerung sind nicht verfuegbar; andere Auftraege laufen ohne Gegner-KI. Zivile Spieler sollten unbewaffnete oder nichtkaempfende Szenarien verwenden.
+* Einheiten jeder Seite koennen aus Vanilla oder Mod-Fraktionen stammen, **sofern die Klassen auf Server und Clients existieren**. Die realen Mod-Klassen sind noch nicht integriert bzw. getestet.
 
-Auftragstypen: Aufklaerung, Sicherung, Zerstoerung, Geisel sichern, Versorgung sichern. Anlage, Bearbeitung (Entwuerfe), Aktivierung, Pause der Auswertung, Fortsetzen und Entfernen. Vanilla-Settings ohne Pflichtmods.
+## Enthaltene Auftragsarten
 
-## 3DEN installieren
+| Name | Technik | Anmerkung |
+|---|---|---|
+| Aufklaerung | Aufenthalt am Einsatzpunkt | Ohne Gegner fuer CIV-Spieler |
+| Sicherung | Gegner besiegen + Gebiet halten | Fuer CIV-Spieler gesperrt |
+| Zerstoerung | Objekt zerstoeren | Fuer CIV-Spieler gesperrt |
+| Personenschutz | Geisel/Zivilperson lebend erreichen | **Noch keine Evakuierung** |
+| Versorgung | Materialstelle erreichen und sichern | **Noch keine Lieferung/Transport** |
+| Ortsbesichtigung | Vor-Ort-Aufenthalt dokumentieren | Friedlicher Auftrag, alle vier Spieler-Seiten |
+| Botengang | Zuerst Abholpunkt, danach Abgabepunkt | Zwei Phasen, **Uebergabe nur simuliert** |
 
-1. Im 3DEN-Editor die gewuenschte Karte laden und ausschliesslich BLUFOR-Spielereinheiten als Playable anlegen. Keine spielbaren OPFOR-, INDEPENDENT- oder Zivilisten-Slots.
-2. Mindestens einen Marker respawn_west setzen.
-3. Drei geeignete Landmarker dyn_zone_1, dyn_zone_2 und dyn_zone_3 setzen, moeglichst mit 50 m freier Umgebung und mindestens 200 m vom Spielerspawn.
-4. Die Mission als DMCS.Altis (bzw. DMCS.<WorldName>) speichern.
-5. description.ext, initServer.sqf, initPlayerLocal.sqf und den gesamten dyn-Ordner aus diesem Verzeichnis in den Missionsordner kopieren. Die mission.sqm wird ausschliesslich in 3DEN erstellt.
-6. Im Multiplayer testen. Berechtigter Host/Admin: Spieleraktion "DMCS | Einsatzfuehrung".
-7. Fuer Dedicated Server einen Administrator per #login anmelden oder UIDs bewusst in DYN_Settings.trustedUIDs[] freigeben.
+Der Host kann Entwuerfe anlegen, bearbeiten, aktivieren, Zielauswertung pausieren, fortsetzen und entfernen. Berechtigung serverseitig ueber Serveradministrator oder explizite Trusted UID.
 
-## Skalierung
+## Dynamisches Zivilleben (optional)
 
-1–4 Spieler: 4 Gegner; 5–8: 6; 9–12: 8; 13–16: 10; 17–24: maximal 12. Modifikatoren: Ohne Medic ab 5 Spielern minus 1; bei Zerstoerung ohne ExplosiveSpecialist minus 1; mindestens 2 Gegner. Die Berechnung erfolgt beim Aktivieren und bleibt fuer diesen Auftrag unveraendert.
+Im Host-Dialog **Zivil EIN** / **Zivil AUS**. Standardmaessig ausgeschaltet (\`ambientCivEnabled = 0\`).
 
-## Hinweise
+* Begrenzt auf \`ambientCivMax = 16\` leichte Agenten; Zielpopulation \`ambientCivPerPlayer = 2\` pro lebendem Spieler, maximal 16.
+* Alle 25 Sekunden serverseitige Bestandskontrolle, **hoechstens 2 neue Agenten pro Durchlauf**.
+* Spawnt nur bei Spielern in der Naehe benannter Staedte/Doerfer und geeigneter Strassensegmente, nicht einfach mitten auf freiem Feld.
+* Agenten erhalten gelegentlich ein einfaches Wegziel. Sie werden bei Abwesenheit von Spielern, deaktiviertem Modul oder Ueberkapazitaet entfernt.
+* **Noch kein Verkehr, keine Passanteninteraktion, keine zivilen Routinen oder Gebaeude-Innenleben**. Je nach Terrain ohne Staedte/Strassen kann die Population leer bleiben.
+* Verwendete Zivilistenklasse derzeit \`C_man_1\`; weitere Klassen sind ueber \`ambientCivClasses[]\` konfigurierbar, aber nur nach Existenzpruefung.
 
-* Dieses GitHub-Verzeichnis ist Quellcode, keine lauffaehige Arma-3-Mission ohne mission.sqm.
-* Wenn ein lebender menschlicher Teilnehmer auf einer anderen Seite als BLUFOR steht, wird die Aktivierung neuer Auftraege serverseitig verweigert. Bestehende Auftraege werden dadurch nicht automatisch beendet.
-* Geisel und Versorgung sind in v0.1 einfache Sicherungsauftraege, ohne Evakuierung oder Transport.
-* Pausieren unterbricht nur die Zielauswertung, nicht die KI.
-* Die modifizierte Missions-RPC-Whitelist kann mit ACE/CBA/ACRE und anderen Mods kollidieren; vor Produktiveinsatz pruefen.
-* Kein Ingame-, JIP-, Dedicated-Server- oder Mod-Kompatibilitaetstest wurde durchgefuehrt.
-* Keine automatische Uebertragbarkeit auf alle Terrains. Weitere Hinweise: docs/MAPS.md.
-* Originalstand aus dem DMCS_0_1-Prototyp; keine privaten Zugangsdaten enthalten.
+## 3DEN – Installation
 
-## Testen
+1. Gewuenschte Karte laden, spielbare Coop-Einheiten einer gemeinsamen Seite setzen: WEST, EAST, GUER **oder CIV**. Andere Seiten als KI sind erlaubt, aber nicht als gegnerische **Spieler-Slots**.
+2. Respawn-Marker passend zur Spieler-Seite anlegen: \`respawn_west\`, \`respawn_east\`, \`respawn_guerrila\` oder \`respawn_civilian\`. Schreibweise und Respawn-Einstellungen in 3DEN bzw. auf dem Server testen.
+3. Mindestens drei geeignete Marker \`dyn_zone_1\`, \`dyn_zone_2\`, \`dyn_zone_3\` anlegen: Landflaechen, frei fuer Zielobjekte und KI.
+4. Fuer den zweiphasigen Botengang **zusaetzlich** \`dyn_civ_dropoff\` setzen, mindestens 60 m vom Abholpunkt entfernt, ebenfalls auf Land.
+5. Mission als \`DMCS.<WorldName>\` speichern (etwa \`DMCS.Altis\`). Die erzeugte \`mission.sqm\` **nicht** durch Dateien aus GitHub ersetzen.
+6. \`description.ext\`, \`initServer.sqf\`, \`initPlayerLocal.sqf\` und den gesamten \`dyn/\`-Ordner in den Missionsordner kopieren.
+7. Im Multiplayer starten. Admin oder freigegebener Lagedarsteller oeffnet die Spieleraktion \`DMCS | Einsatzfuehrung\`.
+8. Erst einen friedlichen Auftrag, dann (mit militaerischen Teams) einen Kampfauftrag und anschliessend die Zivilbevoelkerung testen.
 
-Im Multiplayer testen: Host-Rechte, unberechtigte Clientanfrage, 2 gleichzeitige Auftraege, JIP, Spielerbeitritt/-austritt, Auftragsabschluss, Cleanup, RPT-Fehler.
+## Technische Grenzen und Sicherheit
+
+* **Ungetestet:** SQF-Ingame-Ausfuehrung, Dedicated-Server, JIP, Multiplayer-Latenz, Kollisionen, Task-Marker und Modkompatibilitaet.
+* Einfache Ki-Spawns nutzen Offsets um Marker; keine vollstaendige Pruefung auf Gebaeude, Wasser, Hindernisse, unwegsames Gelaende oder versteckte Sektoren.
+* Zivilisten werden als serverseitige \`createAgent\`-Objekte verwaltet; die Steuerung ist kein vollstaendiges ziviles Simulationsframework.
+* **CIV ist nicht automatisch eine Kampfseite.** Absichtlich keine globalen \`setFriend\`-Feindschaften gegen Zivilisten, da das Weltobjekte beeintraechtigen kann.
+* Fuer GUER-Spieler die Beziehungen zu EAST in den 3DEN-Missionseinstellungen pruefen. Eine neutrale Beziehung kann Kampfauftraege unbrauchbar machen.
+* Die Missions-\`CfgRemoteExec\`-Whitelist kann mit ACE/CBA/ACRE bzw. weiteren Mods kollidieren. In dieser Form nicht ungetestet auf produktiven Modservern einsetzen.
+* Die Aufgabenregistrierung fuer JIP basiert auf dem Vanilla-BIS-Task-Framework. Praktische Synchronisation noch pruefen.
+* Die Population wird nur **serverseitig** verwaltet und repliziert ihre Agenten als Engine-Objekte. Keine Pro-Agent-RPCs.
+
+Details: [Kartenkompatibilitaet](docs/MAPS.md), [Zivile Einsaetze](docs/CIVILIAN.md).
+
+## Zwingende Tests vor Freigabe
+
+Vier getrennte Missionsinstanzen je Spieler-Seite (WEST/EAST/GUER/CIV), Auftragsstart/Abbruch, 2+ Auftragssituationen, unberechtigter Client, JIP, Respawn, Spielerwechsel, Civ-Modul EIN/AUS, KI-Cleanup und RPT-Ausgabe. Militaerische und zivile Modi getrennt bewerten.
+
+**Hinweis:** Das Verzeichnis ist Quellcode. Ohne \`mission.sqm\` kein direkt startbarer Missionsexport.
