@@ -42,12 +42,7 @@ while {true} do {
                 case "rescue": {8};
                 case "supply": {10};
                 case "civ_visit": {25};
-                case "civ_medical": {
-                    // Abschluss ausschliesslich ueber servervalidierte Spieleraktion.
-                    if (isNull _tgt || {!alive _tgt}) then {
-                        _finish = "FAILED";
-                    };
-                };
+                case "civ_medical": {8};
                 case "civ_courier": {12};
                 default {10};
             };
@@ -108,6 +103,13 @@ while {true} do {
                         if ((_r get "progress") >= _hold) then {
                             _finish = "SUCCEEDED";
                         };
+                    };
+                };
+                case "civ_medical": {
+                    // Abschluss nur durch die servervalidierten Patientenaktionen.
+                    // Bei Tod des Patienten scheitert der Einsatz.
+                    if (isNull _tgt || {!alive _tgt}) then {
+                        _finish = "FAILED";
                     };
                 };
                 case "civ_courier": {
