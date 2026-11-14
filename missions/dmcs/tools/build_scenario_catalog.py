@@ -96,6 +96,23 @@ def main() -> int:
         else:
             destination.write_text(content, encoding="utf-8", newline="\n")
             print(f"Wrote {destination.relative_to(ROOT)}")
+    # Nested #include paths are resolved relative to catalog.hpp itself,
+    # while description.ext is located in the mission root.
+    catalog = OUTPUT / "catalog.hpp"
+    if not catalog.is_file():
+        errors.append(f"{catalog}: missing catalog index")
+    else:
+        index = catalog.read_text(encoding="utf-8")
+        for suffix in SIDES.values():
+            expected = '#include "' + suffix + '.hpp"'
+            if expected not in index:
+                errors.append(
+                    f"{catalog}: missing relative include {expected}"
+                )
+    mission = (ROOT / "description.ext").read_text(encoding="utf-8")
+    if '#include "dyn\\scenarios\\catalog.hpp"' not in mission:
+        errors.append("description.ext does not include the scenario index")
+
     if errors:
         for item in errors:
             print("FAIL:", item, file=sys.stderr)
