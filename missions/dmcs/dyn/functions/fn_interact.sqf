@@ -34,7 +34,7 @@ if !(_id in (keys DYN_registry)) exitWith {};
 private _r = DYN_registry get _id;
 if !((_r get "state") isEqualTo "ACTIVE" &&
     {(_r get "type") isEqualTo "civ_medical"} &&
-    {_r get "side" isEqualTo side group _actor}) exitWith {};
+    {(_r get "side") isEqualTo (side group _actor)}) exitWith {};
 
 private _patient = _r get "target";
 if (isNull _patient || {!alive _patient}) exitWith {};
