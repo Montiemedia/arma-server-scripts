@@ -1,0 +1,17 @@
+name = "DMCS - Dynamic Mission Control System"
+prefix = "dmcs"
+mainprefix = "z"
+
+[version]
+major = 0
+minor = 5
+patch = 0
+git_hash = 0
+
+[properties]
+author = "Montiemedia"
+url = "https://github.com/Montiemedia/arma-server-scripts"
+
+[hemtt.release]
+sign = true
+archive = true
