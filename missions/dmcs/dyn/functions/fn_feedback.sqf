@@ -4,4 +4,8 @@ if (!hasInterface) exitWith {};
 if (isRemoteExecuted && {remoteExecutedOwner != 2}) exitWith {};
 params [["_message", "", [""]]];
 hintSilent format ["DMCS: %1", _message];
+private _library = findDisplay 7980;
+if (!isNull _library) then {
+    (_library displayCtrl 2808) ctrlSetText _message;
+};
 [] call DYN_fnc_uiRefresh;
