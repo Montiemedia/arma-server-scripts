@@ -24,7 +24,7 @@ Das Modul versucht Agenten nur nahe bereits benannter Staedte/Doerfer und in Str
 
 1. Alle benoetigten Kartenmods und Signatur-Keys auf Server/Clients vorhanden.
 2. Menschliche Coop-Slots und korrekter Respawn fuer die gewaehlte Spieler-Seite.
-3. Auftrags- und Botengang-Marker auf freiem, begehbarem Land.
+3. Auftrags- und Botengang-Marker auf freiem, begehbarem Land. Medizinischer Notfall braucht einen erreichbaren, freien Standplatz fuer den Patienten-NPC.
 4. Spieler- und Gegner-Klassen in `CfgVehicles` vorhanden, richtige Seitenzuordnung der erzeugten Gegner.
 5. Fraktionsbeziehungen im Intel-Dialog passend zur Missionsidee.
 6. KI-Pfadfindung, Aufgabe, JIP-Sync und Objektbereinigung mit realen Spielern testen.
