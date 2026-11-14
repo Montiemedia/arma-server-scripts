@@ -7,6 +7,9 @@ params [
     ["_type", "", [""]],
     ["_zone", "", [""]]
 ];
+// Keine frei langen Client-Strings in der Serverlogik oder im RPT verarbeiten.
+if (count _verb > 24 || {count _id > 48} ||
+    {count _type > 32} || {count _zone > 64}) exitWith {};
 private _sender = if (isRemoteExecuted) then { remoteExecutedOwner } else {
     if (hasInterface) then {clientOwner} else {-1}
 };
