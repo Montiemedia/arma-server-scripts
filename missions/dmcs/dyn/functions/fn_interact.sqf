@@ -21,13 +21,14 @@ private _last = DYN_lastInteractions getOrDefault [_sender, -100];
 if (_now - _last < 0.35) exitWith {};
 DYN_lastInteractions set [_sender, _now];
 
-private _index = allPlayers findIf {
+private _players = allPlayers;
+private _index = _players findIf {
     !isNull _x && {isPlayer _x} &&
     {typeOf _x != "HeadlessClient_F"} &&
-    {owner _x isEqualTo _sender}
+    {(owner _x) isEqualTo _sender}
 };
 if (_index < 0) exitWith {};
-private _actor = allPlayers # _index;
+private _actor = _players # _index;
 if (!alive _actor || {vehicle _actor != _actor}) exitWith {};
 
 if !(_id in (keys DYN_registry)) exitWith {};
