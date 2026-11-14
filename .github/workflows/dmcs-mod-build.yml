@@ -37,6 +37,9 @@ jobs:
         working-directory: missions/dmcs/mod
         run: hemtt release
 
+      - name: Verify release contains signed PBO and public key
+        run: python3 missions/dmcs/mod/tools/check_release.py
+
       - name: Upload installable @DMCS archive
         uses: actions/upload-artifact@v4
         with:
