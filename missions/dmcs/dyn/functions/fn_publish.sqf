@@ -7,7 +7,8 @@ private _out = [];
     _out pushBack [
         _r get "id", _r get "type", _r get "zone", _r get "state",
         _profile getOrDefault ["players", 0], _profile getOrDefault ["enemies", 0],
-        _r getOrDefault ["stage", 0], str (_r getOrDefault ["side", sideUnknown])
+        _r getOrDefault ["stage", 0], str (_r getOrDefault ["side", sideUnknown]),
+        _r getOrDefault ["scenarioId", ""]
     ];
 } forEach (keys DYN_registry);
 _out sort true;
