@@ -74,9 +74,11 @@ if (_reason isEqualTo "init") then {
     {
         private _row = _zones lbAdd _x;
         _zones lbSetData [_row, _x];
-    } forEach (getArray (
+    } forEach ((getArray (
         missionConfigFile >> "DYN_Settings" >> "zones"
-    ));
+    )) select {
+        markerShape _x != "" && {!surfaceIsWater (getMarkerPos _x)}
+    });
     if (lbSize _zones > 0) then {_zones lbSetCurSel 0;};
 };
 
