@@ -4,6 +4,14 @@
 
 Serverautoritatives SQF-Missionsframework mit Host-Menue, vorbereitbaren Auftraegen, Spieler-Skalierung und optionalem dynamischem Zivilleben. Kein Pflichtmod. Die finale Mission und `mission.sqm` werden in 3DEN erstellt.
 
+## Szenariobibliothek: 800 fiktive Auftraege
+
+Unter [scenarios/README.md](scenarios/README.md) liegen **200 erzählerische Szenariovorlagen pro Seite (WEST / EAST / GUER / CIV)**, insgesamt 800 mit Namen, Briefings, Lagekomplikationen, Zielen, Zeit- und Spieler-Richtwerten. Lesefassungen in Markdown und strukturierte Daten in JSON.
+
+**Wichtig:** Die Bibliothek ist **nicht in die laufende SQF-Missionslogik integriert**; die Datensaetze haben `implementation: CONCEPT_ONLY`. `suggested_mechanic` ist ein Vorschlag zur kuenftigen Umsetzung, keine Zusage, dass die Story bereits automatisch gespielt werden kann. JSON wird von der aktuellen Missionsengine nicht geladen.
+
+Statischer Katalogcheck: `python3 missions/dmcs/tools/validate_scenarios.py`.
+
 ## Spielmodus: ausschliesslich COOP (PvE)
 
 **Nicht an BLUFOR gebunden.** Spielbare menschliche Einheiten duerfen auf **WEST, EAST, GUER oder CIV** liegen. Die automatische Team-Seitenerkennung (`playerSide = "AUTO"`) erkennt beim Aktivieren eines Auftrags die gemeinsame Seite aller anwesenden menschlichen Spieler; eine feste Seite ist konfigurierbar.
