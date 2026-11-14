@@ -5,6 +5,12 @@ if (isNull _d) exitWith {};
 private _list = _d displayCtrl 1800;
 private _type = _d displayCtrl 1801;
 private _zone = _d displayCtrl 1802;
+private _civState = missionNamespace getVariable ["DYN_publicCiv", [false, 0]];
+(_d displayCtrl 1803) ctrlSetText format [
+    "Zivilisten: %1 | %2 aktiv",
+    if (_civState # 0) then {"EIN"} else {"AUS"},
+    _civState # 1
+];
 private _selected = lbCurSel _list;
 private _old = if (_selected >= 0) then {_list lbData _selected} else {""};
 private _oldType = if (lbCurSel _type >= 0) then {_type lbData (lbCurSel _type)} else {""};
@@ -26,7 +32,9 @@ lbClear _type;
 } forEach [
     ["Aufklaerung", "recon"], ["Sicherung", "secure"],
     ["Zerstoerung", "destroy"], ["Geisel sichern", "rescue"],
-    ["Versorgung sichern", "supply"]
+    ["Versorgung sichern", "supply"],
+    ["Zivil: Ortsbesichtigung", "civ_visit"],
+    ["Zivil: Botengang", "civ_courier"]
 ];
 if (lbCurSel _type < 0) then {_type lbSetCurSel 0;};
 lbClear _zone;
