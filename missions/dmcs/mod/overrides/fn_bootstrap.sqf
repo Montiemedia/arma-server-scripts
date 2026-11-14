@@ -17,5 +17,18 @@ if (isServer) then {
     };
 };
 if (hasInterface) then {
-    [] execVM "\z\dmcs\addons\core\initPlayerLocal.sqf";
+    // Do not offer a nonfunctional host UI when only the client has the mod.
+    [] spawn {
+        private _deadline = diag_tickTime + 45;
+        waitUntil {
+            sleep 1;
+            !isNil "DYN_publicTasks" ||
+            {diag_tickTime >= _deadline}
+        };
+        if (!isNil "DYN_publicTasks") then {
+            [] execVM "\z\dmcs\addons\core\initPlayerLocal.sqf";
+        } else {
+            diag_log "[DMCS-Addon] No server handshake; host UI disabled.";
+        };
+    };
 };
