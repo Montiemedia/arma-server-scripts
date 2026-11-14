@@ -13,6 +13,25 @@ if (_teamSide isEqualTo sideUnknown) exitWith {
 };
 
 private _type = _r get "type";
+private _scenarioId = _r getOrDefault ["scenarioId", ""];
+private _scenarioDefinition = configNull;
+if (_scenarioId != "") then {
+    _scenarioDefinition = [_scenarioId] call DYN_fnc_scenarioGet;
+};
+if (_scenarioId != "" && {!isClass _scenarioDefinition}) exitWith {
+    diag_log format ["[DMCS] Vorlage nicht gefunden: %1", _scenarioId];
+    false
+};
+if (_scenarioId != "" && {
+    getText (_scenarioDefinition >> "side") != str _teamSide ||
+    {getText (_scenarioDefinition >> "mechanic") != _type}
+}) exitWith {
+    diag_log format [
+        "[DMCS] Seiten- oder Methodenkonflikt in Vorlage %1",
+        _scenarioId
+    ];
+    false
+};
 if (_teamSide isEqualTo civilian && {_type in ["secure", "destroy"]}) exitWith {
     diag_log "[DMCS] Fuer zivile Spieler sind Sicherung/Zerstoerung deaktiviert.";
     false
@@ -160,6 +179,24 @@ private _brief = format [
     "%1 Mensch(en) bei Aktivierung, %2 Gegner-KI. %3",
     _profile get "players", _n, _spec # 1
 ];
+if (_scenarioId != "") then {
+    private _nl = toString [10];
+    _title = format [
+        "%1 | %2",
+        getText (_scenarioDefinition >> "title"), _id
+    ];
+    _brief = format [
+        "VORLAGE %1 | %2%3%3%4%3%3" +
+        "Einsatzziel: %5%3%3" +
+        "DMCS-Basismethode: %6. Die Geschichte ist ein Briefing, " +
+        "nicht automatisch eine vollstaendige Simulation.%3%3" +
+        "Aktive Spieler bei Start: %7; KI-Gegner: %8.",
+        _scenarioId, getText (_scenarioDefinition >> "category"), _nl,
+        getText (_scenarioDefinition >> "briefing"),
+        getText (_scenarioDefinition >> "objective"), _type,
+        _profile get "players", _n
+    ];
+};
 
 private _taskOK = false;
 if (!_failed) then {
