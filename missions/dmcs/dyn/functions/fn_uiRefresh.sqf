@@ -34,7 +34,8 @@ lbClear _type;
     ["Zerstoerung", "destroy"], ["Geisel sichern", "rescue"],
     ["Versorgung sichern", "supply"],
     ["Zivil: Ortsbesichtigung", "civ_visit"],
-    ["Zivil: Botengang", "civ_courier"]
+    ["Zivil: Botengang", "civ_courier"],
+    ["Zivil: Medizinischer Notfall", "civ_medical"]
 ];
 if (lbCurSel _type < 0) then {_type lbSetCurSel 0;};
 lbClear _zone;
