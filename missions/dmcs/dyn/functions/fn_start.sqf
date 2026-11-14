@@ -2,6 +2,17 @@
    Positionsmarker muessen vom Missionsbauer in freier Landflaeche liegen. */
 params [["_r", createHashMap, [createHashMap]]];
 if (!isServer || {!((_r get "state") isEqualTo "DRAFT")}) exitWith { false };
+// COOP-only (PvE): keine aktiven menschlichen Einheiten ausserhalb BLUFOR.
+// Headless Clients zaehlen nicht als menschliche Teilnehmer.
+private _wrongSide = allPlayers findIf {
+    !isNull _x && {isPlayer _x} && {alive _x} &&
+    {typeOf _x != "HeadlessClient_F"} &&
+    {side group _x != west}
+};
+if (_wrongSide >= 0) exitWith {
+    diag_log "[DMCS] COOP-only: Auftrag verweigert (aktiver nicht-BLUFOR-Spieler).";
+    false
+};
 private _profile = [_r get "type"] call DYN_fnc_scale;
 if ((_profile get "players") < 1) exitWith { false };
 private _pos = getMarkerPos (_r get "zone");
