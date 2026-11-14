@@ -19,3 +19,5 @@ jobs:
         uses: actions/checkout@v4
       - name: Validate DMCS source structure
         run: python3 missions/dmcs/tools/validate_static.py
+      - name: Validate DMCS scenario catalogs
+        run: python3 missions/dmcs/tools/validate_scenarios.py
