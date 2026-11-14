@@ -1,6 +1,6 @@
 # DMCS – Dynamic Mission Control System (Arma 3)
 
-**Status: Prototyp 0.3 (Quellstand), nicht in Arma 3 getestet. Nicht als einsatzbereites PBO freigegeben.**
+**Status: Prototyp 0.4 (Quellstand), nicht in Arma 3 getestet. Nicht als einsatzbereites PBO freigegeben.**
 
 Serverautoritatives SQF-Missionsframework mit Host-Menue, vorbereitbaren Auftraegen, Spieler-Skalierung und optionalem dynamischem Zivilleben. Kein Pflichtmod. Die finale Mission und `mission.sqm` werden in 3DEN erstellt.
 
@@ -8,9 +8,11 @@ Serverautoritatives SQF-Missionsframework mit Host-Menue, vorbereitbaren Auftrae
 
 Unter [scenarios/README.md](scenarios/README.md) liegen **200 erzählerische Szenariovorlagen pro Seite (WEST / EAST / GUER / CIV)**, insgesamt 800 mit Namen, Briefings, Lagekomplikationen, Zielen, Zeit- und Spieler-Richtwerten. Lesefassungen in Markdown und strukturierte Daten in JSON.
 
-**Wichtig:** Die Bibliothek ist **nicht in die laufende SQF-Missionslogik integriert**; die Datensaetze haben `implementation: CONCEPT_ONLY`. `suggested_mechanic` ist ein Vorschlag zur kuenftigen Umsetzung, keine Zusage, dass die Story bereits automatisch gespielt werden kann. JSON wird von der aktuellen Missionsengine nicht geladen.
+**Neu in 0.4:** Alle 800 Vorlagen werden aus JSON in vier Arma-Konfigurationsdateien exportiert und durch `description.ext` in `missionConfigFile` eingebunden. Im Host-Dialog oeffnet `Szenariobibliothek (800)` eine Auswahl mit Filtern nach Seite, Kategorie, Dauer und empfohlener Spielerzahl. Eine Vorlage kann nach serverseitiger ID-/Berechtigungspruefung als Entwurf angelegt und mit eigenem Titel/Briefing aktiviert werden.
 
-Statischer Katalogcheck: `python3 missions/dmcs/tools/validate_scenarios.py`.
+**Wichtig:** Die Vorlagen sind damit auswählbar und als **generische Auftraege** aktivierbar, jedoch **keine 800 eigenstaendig geskripteten Szenarien**. Die JSON-Metadaten behalten `implementation: CONCEPT_ONLY`, denn der fiktive Hintergrund erzeugt noch keine spezifischen Objekte, Gespraeche, Brandlagen oder Unfallablaeufe. Die Missionsengine liest die generierten HPP-Definitionen, nicht die JSON-Dateien zur Laufzeit.
+
+**Anleitung:** [Szenariomanager und Build](docs/SCENARIO_MANAGER.md). **Buildpruefung:** `python3 missions/dmcs/tools/build_scenario_catalog.py --check`. **Datenpruefung:** `python3 missions/dmcs/tools/validate_scenarios.py`.
 
 ## Spielmodus: ausschliesslich COOP (PvE)
 
@@ -56,7 +58,7 @@ Im Host-Dialog **Zivil EIN** / **Zivil AUS**. Standardmaessig ausgeschaltet (`am
 3. Mindestens drei geeignete Marker `dyn_zone_1`, `dyn_zone_2`, `dyn_zone_3` anlegen: Landflaechen, frei fuer Zielobjekte und KI.
 4. Fuer den zweiphasigen Botengang **zusaetzlich** `dyn_civ_dropoff` setzen, mindestens 60 m vom Abholpunkt entfernt, ebenfalls auf Land.
 5. Mission als `DMCS.<WorldName>` speichern (etwa `DMCS.Altis`). Die erzeugte `mission.sqm` **nicht** durch Dateien aus GitHub ersetzen.
-6. `description.ext`, `initServer.sqf`, `initPlayerLocal.sqf` und den gesamten `dyn/`-Ordner in den Missionsordner kopieren.
+6. `description.ext`, `initServer.sqf`, `initPlayerLocal.sqf` und den gesamten `dyn/`-Ordner **einschliesslich `dyn/scenarios/*.hpp`** in den Missionsordner kopieren.
 7. Im Multiplayer starten. Admin oder freigegebener Lagedarsteller oeffnet die Spieleraktion `DMCS | Einsatzfuehrung`.
 8. Erst einen friedlichen Auftrag, dann (mit militaerischen Teams) einen Kampfauftrag und anschliessend die Zivilbevoelkerung testen.
 
@@ -73,7 +75,7 @@ Im Host-Dialog **Zivil EIN** / **Zivil AUS**. Standardmaessig ausgeschaltet (`am
 * Der medizinische Notfall bietet zwei Spieleraktionen mit serverseitig kontrollierten Phasen; keine realistische Behandlung oder Evakuierung.
 * Der lokale Strukturcheck `python3 missions/dmcs/tools/validate_static.py` ist kein SQF-Compiler. Die Abnahme-Checkliste steht in [docs/TESTS.md](docs/TESTS.md).
 
-Details: [Kartenkompatibilitaet](docs/MAPS.md), [Zivile Einsaetze](docs/CIVILIAN.md), [Multiplayer-Testplan](docs/TESTS.md).
+Details: [Szenariomanager](docs/SCENARIO_MANAGER.md), [Kartenkompatibilitaet](docs/MAPS.md), [Zivile Einsaetze](docs/CIVILIAN.md), [Multiplayer-Testplan](docs/TESTS.md).
 
 ## Zwingende Tests vor Freigabe
 
