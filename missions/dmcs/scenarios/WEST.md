@@ -10,12 +10,12 @@ Oberstabsfeldwebel Elias Reuter meldet aus einer vorgeschobenen Beobachtungsstel
 **Auftrag:** Den Sachverhalt vor Ort prüfen, Beobachtungen dokumentieren und gesicherte Meldungen an die Einsatzleitung übermitteln. **Richtwert:** 25 Minuten, 2–6 Personen. **Mechanikvorschlag:** `recon` (nicht als komplett umgesetzt kennzeichnen).
 
 ### W-002 · Licht hinter dem Grat
-Major Julian Falk meldet aus dem Rand eines Industriegebiets: Jenseits einer unbewohnten Anhöhe wurden nachts Fahrzeuglichter gesehen. Ein Landwirt behauptet, die Fahrzeuge hätten Hilfsgüter transportiert. Die Gruppe muss den Sachverhalt vor Ort prüfen, Beobachtungen dokumentieren und gesicherte Meldungen an die Einsatzleitung übermitteln.
+Major Julian Falk meldet vom Rand eines Industriegebiets: Jenseits einer unbewohnten Anhöhe wurden nachts Fahrzeuglichter gesehen. Ein Landwirt behauptet, die Fahrzeuge hätten Hilfsgüter transportiert. Die Gruppe muss den Sachverhalt vor Ort prüfen, Beobachtungen dokumentieren und gesicherte Meldungen an die Einsatzleitung übermitteln.
 
 **Auftrag:** Den Sachverhalt vor Ort prüfen, Beobachtungen dokumentieren und gesicherte Meldungen an die Einsatzleitung übermitteln. **Richtwert:** 40 Minuten, 4–10 Personen. **Mechanikvorschlag:** `recon` (nicht als komplett umgesetzt kennzeichnen).
 
 ### W-003 · Der falsche Konvoi
-Hauptmann Laura Brenner meldet aus einer bewaldeten Höhenlinie: Eine Patrouille hat Fahrzeuge mit scheinbar eigenen Markierungen gesehen. Die Kennzeichen entsprechen keiner angemeldeten Bewegung. Die Gruppe muss den Sachverhalt vor Ort prüfen, Beobachtungen dokumentieren und gesicherte Meldungen an die Einsatzleitung übermitteln.
+Hauptmann Laura Brenner meldet von einer bewaldeten Höhenlinie: Eine Patrouille hat Fahrzeuge mit scheinbar eigenen Markierungen gesehen. Die Kennzeichen entsprechen keiner angemeldeten Bewegung. Die Gruppe muss den Sachverhalt vor Ort prüfen, Beobachtungen dokumentieren und gesicherte Meldungen an die Einsatzleitung übermitteln.
 
 **Auftrag:** Den Sachverhalt vor Ort prüfen, Beobachtungen dokumentieren und gesicherte Meldungen an die Einsatzleitung übermitteln. **Richtwert:** 55 Minuten, 6–16 Personen. **Mechanikvorschlag:** `recon` (nicht als komplett umgesetzt kennzeichnen).
 
@@ -40,12 +40,12 @@ Major Fatima Özdemir meldet aus einer vorgeschobenen Beobachtungsstelle: Anwohn
 **Auftrag:** Den Sachverhalt vor Ort prüfen, Beobachtungen dokumentieren und gesicherte Meldungen an die Einsatzleitung übermitteln. **Richtwert:** 40 Minuten, 6–16 Personen. **Mechanikvorschlag:** `recon` (nicht als komplett umgesetzt kennzeichnen).
 
 ### W-008 · Das geöffnete Depot
-Major Lukas Stern meldet aus dem Rand eines Industriegebiets: Das Tor eines alten Materiallagers steht seit der Nacht offen. Ein Wartungsauftrag erklärt nur einen Teil der beobachteten Aktivitäten. Die Gruppe muss den Sachverhalt vor Ort prüfen, Beobachtungen dokumentieren und gesicherte Meldungen an die Einsatzleitung übermitteln.
+Major Lukas Stern meldet vom Rand eines Industriegebiets: Das Tor eines alten Materiallagers steht seit der Nacht offen. Ein Wartungsauftrag erklärt nur einen Teil der beobachteten Aktivitäten. Die Gruppe muss den Sachverhalt vor Ort prüfen, Beobachtungen dokumentieren und gesicherte Meldungen an die Einsatzleitung übermitteln.
 
 **Auftrag:** Den Sachverhalt vor Ort prüfen, Beobachtungen dokumentieren und gesicherte Meldungen an die Einsatzleitung übermitteln. **Richtwert:** 55 Minuten, 8–24 Personen. **Mechanikvorschlag:** `recon` (nicht als komplett umgesetzt kennzeichnen).
 
 ### W-009 · Waggon Nummer Sieben
-Leutnant Jonas Brehm meldet aus einer bewaldeten Höhenlinie: Auf einem Gütergleis steht ein nicht angekündigter Waggon. Der Bahnhofsvorsteher kennt dessen Absender nicht. Die Gruppe muss den Sachverhalt vor Ort prüfen, Beobachtungen dokumentieren und gesicherte Meldungen an die Einsatzleitung übermitteln.
+Leutnant Jonas Brehm meldet von einer bewaldeten Höhenlinie: Auf einem Gütergleis steht ein nicht angekündigter Waggon. Der Bahnhofsvorsteher kennt dessen Absender nicht. Die Gruppe muss den Sachverhalt vor Ort prüfen, Beobachtungen dokumentieren und gesicherte Meldungen an die Einsatzleitung übermitteln.
 
 **Auftrag:** Den Sachverhalt vor Ort prüfen, Beobachtungen dokumentieren und gesicherte Meldungen an die Einsatzleitung übermitteln. **Richtwert:** 70 Minuten, 2–6 Personen. **Mechanikvorschlag:** `recon` (nicht als komplett umgesetzt kennzeichnen).
 
@@ -70,12 +70,12 @@ Hauptmann Clara Busch meldet aus einer vorgeschobenen Beobachtungsstelle: An ein
 **Auftrag:** Den Sachverhalt vor Ort prüfen, Beobachtungen dokumentieren und gesicherte Meldungen an die Einsatzleitung übermitteln. **Richtwert:** 55 Minuten, 2–6 Personen. **Mechanikvorschlag:** `recon` (nicht als komplett umgesetzt kennzeichnen).
 
 ### W-014 · Die Nachtlandung
-Hauptmann Sarah Voss meldet aus dem Rand eines Industriegebiets: Einwohner melden das Geräusch eines Hubschraubers außerhalb des Flugfeldes. Die Flugsicherung hat keinen entsprechenden Flugplan. Die Gruppe muss den Sachverhalt vor Ort prüfen, Beobachtungen dokumentieren und gesicherte Meldungen an die Einsatzleitung übermitteln.
+Hauptmann Sarah Voss meldet vom Rand eines Industriegebiets: Einwohner melden das Geräusch eines Hubschraubers außerhalb des Flugfeldes. Die Flugsicherung hat keinen entsprechenden Flugplan. Die Gruppe muss den Sachverhalt vor Ort prüfen, Beobachtungen dokumentieren und gesicherte Meldungen an die Einsatzleitung übermitteln.
 
 **Auftrag:** Den Sachverhalt vor Ort prüfen, Beobachtungen dokumentieren und gesicherte Meldungen an die Einsatzleitung übermitteln. **Richtwert:** 70 Minuten, 4–10 Personen. **Mechanikvorschlag:** `recon` (nicht als komplett umgesetzt kennzeichnen).
 
 ### W-015 · Die unterbrochene Straße
-Leutnant Ronja Becker meldet aus einer bewaldeten Höhenlinie: Eine wichtige Ausweichroute ist ohne offizielle Sperrung blockiert. Zivile Bauarbeiten könnten die Erklärung sein. Die Gruppe muss den Sachverhalt vor Ort prüfen, Beobachtungen dokumentieren und gesicherte Meldungen an die Einsatzleitung übermitteln.
+Leutnant Ronja Becker meldet von einer bewaldeten Höhenlinie: Eine wichtige Ausweichroute ist ohne offizielle Sperrung blockiert. Zivile Bauarbeiten könnten die Erklärung sein. Die Gruppe muss den Sachverhalt vor Ort prüfen, Beobachtungen dokumentieren und gesicherte Meldungen an die Einsatzleitung übermitteln.
 
 **Auftrag:** Den Sachverhalt vor Ort prüfen, Beobachtungen dokumentieren und gesicherte Meldungen an die Einsatzleitung übermitteln. **Richtwert:** 85 Minuten, 6–16 Personen. **Mechanikvorschlag:** `recon` (nicht als komplett umgesetzt kennzeichnen).
 
@@ -100,7 +100,7 @@ Hauptmann Aylin Berger meldet aus einer vorgeschobenen Beobachtungsstelle: Ein n
 **Auftrag:** Den Sachverhalt vor Ort prüfen, Beobachtungen dokumentieren und gesicherte Meldungen an die Einsatzleitung übermitteln. **Richtwert:** 70 Minuten, 6–16 Personen. **Mechanikvorschlag:** `recon` (nicht als komplett umgesetzt kennzeichnen).
 
 ### W-020 · Der unsichtbare Bauzaun
-Leutnant Timo Kruse meldet aus dem Rand eines Industriegebiets: Eine Baustelle nahe einer wichtigen Straße taucht in keinem Lageplan auf. Mehrere Behörden beanspruchen die Zuständigkeit. Die Gruppe muss den Sachverhalt vor Ort prüfen, Beobachtungen dokumentieren und gesicherte Meldungen an die Einsatzleitung übermitteln.
+Leutnant Timo Kruse meldet vom Rand eines Industriegebiets: Eine Baustelle nahe einer wichtigen Straße taucht in keinem Lageplan auf. Mehrere Behörden beanspruchen die Zuständigkeit. Die Gruppe muss den Sachverhalt vor Ort prüfen, Beobachtungen dokumentieren und gesicherte Meldungen an die Einsatzleitung übermitteln.
 
 **Auftrag:** Den Sachverhalt vor Ort prüfen, Beobachtungen dokumentieren und gesicherte Meldungen an die Einsatzleitung übermitteln. **Richtwert:** 85 Minuten, 8–24 Personen. **Mechanikvorschlag:** `recon` (nicht als komplett umgesetzt kennzeichnen).
 
