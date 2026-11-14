@@ -57,7 +57,9 @@ lbClear _zone;
     private _i = _zone lbAdd _x;
     _zone lbSetData [_i, _x];
     if (_x isEqualTo _oldZone) then {_zone lbSetCurSel _i;};
-} forEach (getArray (missionConfigFile >> "DYN_Settings" >> "zones"));
+} forEach ((getArray (missionConfigFile >> "DYN_Settings" >> "zones")) select {
+    markerShape _x != "" && {!surfaceIsWater (getMarkerPos _x)}
+});
 if (lbCurSel _zone < 0 && {lbSize _zone > 0}) then {_zone lbSetCurSel 0;};
 // Nach dem Wiederaufbau wird auch die Typ-/Zonenauswahl synchronisiert.
 if (lbCurSel _list >= 0) then {[_list, lbCurSel _list] call DYN_fnc_uiSelect;};
