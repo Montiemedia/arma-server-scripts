@@ -17,6 +17,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+      - name: Check JSON-to-Arma catalog reproducibility
+        run: python3 missions/dmcs/tools/build_scenario_catalog.py --check
       - name: Validate DMCS source structure
         run: python3 missions/dmcs/tools/validate_static.py
       - name: Validate DMCS scenario catalogs
