@@ -1,8 +1,9 @@
 /* Server: deterministische Skalierung, Snapshot zum Aktivierungszeitpunkt.
    Nur lebende, spielergesteuerte BLUFOR-Figuren (kein HC). */
 params [["_type", "", [""]]];
+private _side = [] call DYN_fnc_teamSide;
 private _players = allPlayers select {
-    !isNull _x && {isPlayer _x} && {alive _x} && {side group _x isEqualTo west} && {typeOf _x != "HeadlessClient_F"}
+    !isNull _x && {isPlayer _x} && {alive _x} && {side group _x isEqualTo _side} && {typeOf _x != "HeadlessClient_F"}
 };
 private _n = count _players;
 private _med = { _x getUnitTrait "Medic" } count _players;
@@ -15,5 +16,6 @@ if (_type isEqualTo "destroy" && {_exp isEqualTo 0}) then { _enemy = _enemy - 1;
 _enemy = (_enemy max 2) min 12;
 createHashMapFromArray [
     ["players", _n], ["medics", _med], ["explosives", _exp],
+    ["side", _side],
     ["enemies", _enemy], ["hold", (12 + 4 * ((_bands max 1) - 1)) min 32]
 ]
