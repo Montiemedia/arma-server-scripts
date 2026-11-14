@@ -17,7 +17,7 @@ private _oldType = if (lbCurSel _type >= 0) then {_type lbData (lbCurSel _type)}
 private _oldZone = if (lbCurSel _zone >= 0) then {_zone lbData (lbCurSel _zone)} else {""};
 lbClear _list;
 {
-    _x params ["_id", "_ty", "_zn", "_state", "_players", "_enemies", ["_stage", 0]];
+    _x params ["_id", "_ty", "_zn", "_state", "_players", "_enemies", ["_stage", 0], ["_team", ""], ["_scenarioId", ""]];
     private _phaseInfo = "";
     if (_ty isEqualTo "civ_medical" && {_state isEqualTo "ACTIVE"}) then {
         _phaseInfo = if (_stage isEqualTo 0) then {
@@ -26,9 +26,12 @@ lbClear _list;
             " | Erste Hilfe leisten"
         };
     };
+    private _description = if (_scenarioId != "") then {
+        format ["%1 [%2]", _ty, _scenarioId]
+    } else {_ty};
     private _i = _list lbAdd format [
         "%1 | %2 | %3 | %4 | P:%5 KI:%6%7",
-        _id, _ty, _zn, _state, _players, _enemies, _phaseInfo
+        _id, _description, _zn, _state, _players, _enemies, _phaseInfo
     ];
     _list lbSetData [_i, _id];
     if (_id isEqualTo _old) then {_list lbSetCurSel _i;};
