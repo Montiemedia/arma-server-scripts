@@ -86,7 +86,7 @@ def main() -> int:
     for entry in ("initServer.sqf", "initPlayerLocal.sqf"):
         body = (DMCS / entry).read_text(encoding="utf-8")
         body = body.replace("missionConfigFile", "configFile")
-        (ADDON / entry).write_text(body, encoding="utf-8", newline="\\n")
+        (ADDON / entry).write_text(body, encoding="utf-8", newline="\n")
     (ADDON / "$PBOPREFIX$").write_text(PREFIX + "\n", encoding="utf-8")
 
     # All addon functions must be loaded from the PBO prefix, not
