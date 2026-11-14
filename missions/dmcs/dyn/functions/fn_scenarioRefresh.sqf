@@ -66,7 +66,9 @@ if (_reason isEqualTo "init") then {
         ["12 Spieler", 12], ["16 Spieler", 16],
         ["24 Spieler", 24]
     ];
-    _counts lbSetCurSel 1;
+    // Start with all 200 visible even for a lone mission builder.
+    // "Aktuelle Spieler" is an optional filter.
+    _counts lbSetCurSel 0;
 
     lbClear _zones;
     {
