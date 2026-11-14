@@ -20,6 +20,23 @@ if (hasInterface) then {
                 "(isServer && hasInterface) || {serverCommandAvailable '#lock'} || {(getPlayerUID player) in (getArray (missionConfigFile >> 'DYN_Settings' >> 'trustedUIDs'))}"
             ];
         };
+        // Pro Spielerkoerper einmalig: JIP/Respawn erzeugen keine doppelten Aktionen.
+        // Die Sichtbarkeitsbedingungen werten nur einen kompakten Client-Snapshot aus.
+        if (isNil { player getVariable "DYN_interactionBound" }) then {
+            player setVariable ["DYN_interactionBound", true, false];
+            player addAction [
+                "DMCS | Patient untersuchen",
+                { ["assess"] call DYN_fnc_interactRequest; },
+                nil, 2, false, true, "",
+                "!((['assess'] call DYN_fnc_interactionAvailable) isEqualTo '')"
+            ];
+            player addAction [
+                "DMCS | Erste Hilfe leisten",
+                { ["treat"] call DYN_fnc_interactRequest; },
+                nil, 2, false, true, "",
+                "!((['treat'] call DYN_fnc_interactionAvailable) isEqualTo '')"
+            ];
+        };
         sleep 3;
     };
 };
