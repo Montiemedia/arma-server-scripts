@@ -38,7 +38,7 @@ if (_type isEqualTo "civ_courier" && {
 }) exitWith {false};
 
 private _noCombat = _teamSide isEqualTo civilian ||
-    {_type in ["civ_visit", "civ_courier"]};
+    {_type in ["civ_visit", "civ_courier", "civ_medical"]};
 if (_noCombat) then {_profile set ["enemies", 0];};
 
 // Gegner der jeweils anderen Seite. GUER verwendet EAST.
@@ -67,6 +67,7 @@ if (_n > 0 && {
 private _targetClass = switch (_type) do {
     case "destroy": {getText (_cfg >> "destroyTarget")};
     case "rescue": {getText (_cfg >> "rescueTarget")};
+    case "civ_medical": {getText (_cfg >> "rescueTarget")};
     case "supply": {getText (_cfg >> "supplyTarget")};
     default {""};
 };
@@ -84,7 +85,7 @@ private _failed = false;
 
 // Zielobjekt mit eigenem Besitz; wird beim Cleanup nachvollziehbar geloescht.
 if (_targetClass != "") then {
-    if (_type isEqualTo "rescue") then {
+    if (_type in ["rescue", "civ_medical"]) then {
         private _gC = createGroup civilian;
         if (isNull _gC) then {
             _failed = true;
@@ -142,6 +143,7 @@ private _spec = switch (_type) do {
     case "supply": {["Versorgung", "Nachschubstelle aufsuchen und sichern (ohne Transport)."]};
     case "civ_visit": {["Ortsbesichtigung", "Eine zivile Ortsbegehung abschliessen."]};
     case "civ_courier": {["Botengang", "Am Startpunkt Unterlagen abholen und am Zielpunkt abgeben (simulierte Uebergabe)."]};
+    case "civ_medical": {["Medizinischer Notfall", "Patient vor Ort untersuchen und anschliessend Erste Hilfe leisten. Interaktion ueber das Aktionsmenue, keine ACE-Behandlung."]};
     default {["Auftrag", "Einsatzraum aufsuchen."]};
 };
 
