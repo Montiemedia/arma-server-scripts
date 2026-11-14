@@ -1,4 +1,13 @@
 // Lokaler, guenstiger Respawn/JIP-Waechter; keine Aktionen auf dem Dedicated Server.
+// Aktualisiert offene Host-Dialoge bei Serverstatus-Aenderungen, auch durch andere Hosts.
+if (hasInterface) then {
+    "DYN_publicTasks" addPublicVariableEventHandler {
+        [] call DYN_fnc_uiRefresh;
+    };
+    "DYN_publicCiv" addPublicVariableEventHandler {
+        [] call DYN_fnc_uiRefresh;
+    };
+};
 [] spawn {
     waitUntil { sleep 1; !isNull player };
     while { true } do {
