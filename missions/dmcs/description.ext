@@ -41,6 +41,9 @@ class CfgFunctions {
             class authorized {};
             class teamSide {};
             class civLoop {};
+            class interactionAvailable {};
+            class interactRequest {};
+            class interact {};
             class scale {};
             class publish {};
             class request {};
@@ -62,6 +65,7 @@ class CfgRemoteExec {
         mode = 1;
         jip = 0;
         class DYN_fnc_request { allowedTargets = 2; jip = 0; };
+        class DYN_fnc_interact { allowedTargets = 2; jip = 0; };
         class DYN_fnc_feedback { allowedTargets = 1; jip = 0; };
         // Vanilla-Funktionen, die laut BI im Spielkern remote ausgefuehrt werden.
         class BIS_fnc_effectKilledAirDestruction { allowedTargets = 0; jip = 0; };
