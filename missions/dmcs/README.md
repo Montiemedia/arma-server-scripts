@@ -1,6 +1,6 @@
 # DMCS – Dynamic Mission Control System (Arma 3)
 
-**Status: Prototyp 0.2, nicht in Arma 3 getestet. Nicht als einsatzbereites PBO freigegeben.**
+**Status: Prototyp 0.3 (Quellstand), nicht in Arma 3 getestet. Nicht als einsatzbereites PBO freigegeben.**
 
 Serverautoritatives SQF-Missionsframework mit Host-Menue, vorbereitbaren Auftraegen, Spieler-Skalierung und optionalem dynamischem Zivilleben. Kein Pflichtmod. Die finale Mission und `mission.sqm` werden in 3DEN erstellt.
 
@@ -26,6 +26,7 @@ Serverautoritatives SQF-Missionsframework mit Host-Menue, vorbereitbaren Auftrae
 | Versorgung | Materialstelle erreichen und sichern | **Noch keine Lieferung/Transport** |
 | Ortsbesichtigung | Vor-Ort-Aufenthalt dokumentieren | Friedlicher Auftrag, alle vier Spieler-Seiten |
 | Botengang | Zuerst Abholpunkt, danach Abgabepunkt | Zwei Phasen, **Uebergabe nur simuliert** |
+| Medizinischer Notfall | Patienten-NPC untersuchen, danach Erste Hilfe leisten | Zwei servervalidierte Spieleraktionen, **noch keine ACE-/Vanilla-Medizin** |
 
 Der Host kann Entwuerfe anlegen, bearbeiten, aktivieren, Zielauswertung pausieren, fortsetzen und entfernen. Berechtigung serverseitig ueber Serveradministrator oder explizite Trusted UID.
 
@@ -61,8 +62,10 @@ Im Host-Dialog **Zivil EIN** / **Zivil AUS**. Standardmaessig ausgeschaltet (`am
 * Die Missions-`CfgRemoteExec`-Whitelist kann mit ACE/CBA/ACRE bzw. weiteren Mods kollidieren. In dieser Form nicht ungetestet auf produktiven Modservern einsetzen.
 * Die Aufgabenregistrierung fuer JIP basiert auf dem Vanilla-BIS-Task-Framework. Praktische Synchronisation noch pruefen.
 * Die Population wird nur **serverseitig** verwaltet und repliziert ihre Agenten als Engine-Objekte. Keine Pro-Agent-RPCs.
+* Der medizinische Notfall bietet zwei Spieleraktionen mit serverseitig kontrollierten Phasen; keine realistische Behandlung oder Evakuierung.
+* Der lokale Strukturcheck `python3 missions/dmcs/tools/validate_static.py` ist kein SQF-Compiler. Die Abnahme-Checkliste steht in [docs/TESTS.md](docs/TESTS.md).
 
-Details: [Kartenkompatibilitaet](docs/MAPS.md), [Zivile Einsaetze](docs/CIVILIAN.md).
+Details: [Kartenkompatibilitaet](docs/MAPS.md), [Zivile Einsaetze](docs/CIVILIAN.md), [Multiplayer-Testplan](docs/TESTS.md).
 
 ## Zwingende Tests vor Freigabe
 
