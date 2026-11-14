@@ -5,7 +5,7 @@ Der SQF-Kern ist nicht an Altis gebunden. Je Terrain wird jedoch eine eigene mis
 ## Pflichtpruefungen
 
 1. Karte auf Server und allen Clients vorhanden; Abhaengigkeiten und Keys korrekt.
-2. Playable BLUFOR-Slots, respawn_west und dyn_zone_1 bis dyn_zone_3 in 3DEN anlegen.
+2. Ausschliesslich Playable-BLUFOR-Slots (auch fuer Zeus/Lagedarsteller), respawn_west und dyn_zone_1 bis dyn_zone_3 in 3DEN anlegen. Keine menschlich spielbaren gegnerischen oder zivilen Slots; DMCS ist ausschliesslich COOP/PvE.
 3. Markerzentren sowie Spawnradius landseitig, ausreichend frei und von Objekten/Wasser entfernt.
 4. Konfigurierte CfgVehicles-Klassen auf dem Server vorhanden.
 5. Verhalten von KI-Navigation, Gefechtsbereich und Zielspawn auf der konkreten Karte testen.
