@@ -131,7 +131,7 @@ def main() -> int:
         "",
         settings,
         '#include "dialog.hpp"',
-        '#include "scenarios/catalog.hpp"',
+        '#include "scenarios\\catalog.hpp"',
         "",
     ])
     (ADDON / "config.cpp").write_text(config, encoding="utf-8", newline="\n")
