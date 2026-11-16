@@ -131,15 +131,15 @@ def main() -> int:
     # though the task had been created (the player saw "Aufgabe zugewiesen").
     # Never use the function's returned value as the _taskOK Boolean.
     if re.search(
-        r"\\b_taskOK\\s*=\\s*\\[[\\s\\S]{0,240}?"
-        r"\\]\\s+call\\s+BIS_fnc_taskCreate\\s*;", start
+        r"\b_taskOK\s*=\s*\[[\s\S]{0,240}?"
+        r"\]\s+call\s+BIS_fnc_taskCreate\s*;", start
     ):
         errors.append(
             "Task creation result must not be used as Boolean"
         )
     if not re.search(
-        r"\\b_taskOK\\s*=\\s*\\[_id\\]\\s+call\\s+"
-        r"BIS_fnc_taskExists\\s*;", start
+        r"\b_taskOK\s*=\s*\[_id\]\s+call\s+"
+        r"BIS_fnc_taskExists\s*;", start
     ):
         errors.append(
             "Task creation must confirm actual task existence"
