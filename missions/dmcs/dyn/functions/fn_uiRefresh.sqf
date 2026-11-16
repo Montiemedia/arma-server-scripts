@@ -1,6 +1,7 @@
 // Client UI aus kompaktem, repliziertem Snapshot neu aufbauen.
 if (!hasInterface) exitWith {};
-private _d = findDisplay 7970;
+params [["_d", displayNull, [displayNull]]];
+if (isNull _d) then {_d = findDisplay 7970;};
 if (isNull _d) exitWith {};
 private _list = _d displayCtrl 1800;
 private _type = _d displayCtrl 1801;
