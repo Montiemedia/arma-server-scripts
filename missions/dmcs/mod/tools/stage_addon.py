@@ -107,7 +107,7 @@ def main() -> int:
         "        weapons[] = {};",
         '        requiredAddons[] = {"A3_Functions_F"};',
         "        requiredVersion = 2.14;",
-        '        versionStr = "0.5.0";',
+        '        versionStr = "0.5.1";',
         "    };",
         "};",
         "",
