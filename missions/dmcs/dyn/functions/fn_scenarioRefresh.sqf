@@ -6,8 +6,8 @@
   Rebuilds only on relevant user changes; at most 200 configs on a side.
 */
 if (!hasInterface) exitWith {};
-params [["_reason", "init", [""]]];
-private _display = findDisplay 7980;
+params [["_reason", "init", [""]], ["_display", displayNull, [displayNull]]];
+if (isNull _display) then {_display = findDisplay 7980;};
 if (isNull _display) exitWith {};
 
 // lbClear / lbSetCurSel can fire nested LBSelChanged events.
