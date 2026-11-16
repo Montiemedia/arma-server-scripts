@@ -43,7 +43,7 @@ jobs:
       - name: Upload installable @DMCS archive
         uses: actions/upload-artifact@v4
         with:
-          name: DMCS-test-mod-0.5
+          name: DMCS-test-mod-0.5.1
           path: missions/dmcs/mod/releases/*.zip
           if-no-files-found: error
           retention-days: 30
