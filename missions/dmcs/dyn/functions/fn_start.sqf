@@ -198,12 +198,16 @@ if (_scenarioId != "") then {
     ];
 };
 
+// Never treat the return value of BIS_fnc_taskCreate as a Boolean.
+// In the reported Arma 3 run it returned a String (task ID).
+// Query the task framework explicitly: taskExists always returns a Boolean.
 private _taskOK = false;
 if (!_failed) then {
-    _taskOK = [
+    [
         _teamSide, _id, [_brief, _title, ""], _pos,
         "ASSIGNED", 1, true, "", false
     ] call BIS_fnc_taskCreate;
+    _taskOK = [_id] call BIS_fnc_taskExists;
 };
 
 if (!_taskOK) exitWith {
