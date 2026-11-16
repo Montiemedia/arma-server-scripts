@@ -21,6 +21,10 @@ class DYN_RscButton {
 class DYN_RscListBox {
     type = 5; idc = -1; style = 16; font = "RobotoCondensed";
     sizeEx = 0.03; rowHeight = 0.035;
+    maxHistoryDelay = 1;
+    autoScrollSpeed = -1;
+    autoScrollDelay = 5;
+    autoScrollRewind = 0;
     colorText[] = {1,1,1,1}; colorSelect[] = {1,1,1,1};
     colorSelect2[] = {1,1,1,1}; colorBackground[] = {0.06,0.09,0.11,1};
     colorSelectBackground[] = {0.15,0.31,0.40,1};
@@ -34,7 +38,7 @@ class DYN_RscListBox {
 };
 class DYN_HostDialog {
     idd = 7970; movingEnable = 0; enableSimulation = 1;
-    onLoad = "[] call DYN_fnc_uiRefresh";
+    onLoad = "[_this select 0] call DYN_fnc_uiRefresh";
     class controlsBackground {
         class BG: DYN_RscText {
             x = "safezoneX + safezoneW * 0.19";
@@ -110,12 +114,13 @@ class DYN_HostDialog {
 
 
 class DYN_RscTextMulti: DYN_RscText {
-    style = 16; sizeEx = 0.028;
+    style = 16; sizeEx = 0.028; lineSpacing = 1;
 };
 
 class DYN_ScenarioDialog {
     idd = 7980; movingEnable = 0; enableSimulation = 1;
-    onLoad = "['init'] call DYN_fnc_scenarioRefresh";
+    onLoad = "['init',_this select 0] call DYN_fnc_scenarioRefresh";
+    onUnload = "uiNamespace setVariable ['DYN_scenarioUiBusy', false]";
     class controlsBackground {
         class BG: DYN_RscText {
             x = "safezoneX + safezoneW * 0.10";
