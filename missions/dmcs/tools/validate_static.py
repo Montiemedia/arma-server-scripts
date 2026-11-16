@@ -127,6 +127,24 @@ def main() -> int:
     ).read_text(encoding="utf-8"):
         errors.append("Interaction RPC does not validate the remote sender")
 
+    # Regression: the Arma runtime returned a String for taskCreate even
+    # though the task had been created (the player saw "Aufgabe zugewiesen").
+    # Never use the function's returned value as the _taskOK Boolean.
+    if re.search(
+        r"\\b_taskOK\\s*=\\s*\\[[\\s\\S]{0,240}?"
+        r"\\]\\s+call\\s+BIS_fnc_taskCreate\\s*;", start
+    ):
+        errors.append(
+            "Task creation result must not be used as Boolean"
+        )
+    if not re.search(
+        r"\\b_taskOK\\s*=\\s*\\[_id\\]\\s+call\\s+"
+        r"BIS_fnc_taskExists\\s*;", start
+    ):
+        errors.append(
+            "Task creation must confirm actual task existence"
+        )
+
     if "mode = 1;" in cfg:
         warnings.append(
             "CfgRemoteExec is a strict whitelist: mod/ACE and BI Task Framework "
