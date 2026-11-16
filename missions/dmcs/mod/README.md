@@ -1,6 +1,6 @@
-# @DMCS – Eigenstaendige Arma-3-Mod (0.5.0 TEST)
+# @DMCS – Eigenstaendige Arma-3-Mod (0.5.1 TEST)
 
-**Wichtiger Status: Build- und Spieltest noch nicht bestaetigt.**
+**Wichtiger Status: Der HEMTT-Build ist in CI bereits nachweislich erfolgreich; der Spieltest der Hotfix-Version steht noch aus.**
 Die Quellen, das HEMTT-Buildprojekt, die automatische Initialisierung und die
 Generierung von maximal 12 Karten-Einsatzsektoren wurden ins Repository
 eingebunden. Ein fertiges Download-Archiv existiert erst, wenn der
@@ -10,7 +10,7 @@ GitHub-Actions-Workflow **DMCS Mod Build (HEMTT)** erfolgreich durchgelaufen ist
 
 1. [GitHub Actions: DMCS Mod Build (HEMTT)](https://github.com/Montiemedia/arma-server-scripts/actions/workflows/dmcs-mod-build.yml) oeffnen.
 2. Einen gruenen, erfolgreich abgeschlossenen Build auf **main** aufrufen.
-3. Unter **Artifacts** das Archiv `DMCS-test-mod-0.5` herunterladen.
+3. Unter **Artifacts** das Archiv `DMCS-test-mod-0.5.1` herunterladen.
 4. Das darin enthaltene HEMTT-Release-ZIP entpacken. Es sollte
    `@DMCS/addons/*.pbo`, zugehoerige `.bisign` und einen
    oeffentlichen `.bikey` enthalten.
